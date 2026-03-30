@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FabriControl</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root {
+  --bg:#0d0f12;--bg2:#13161b;--bg3:#1a1e25;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --text:#eef0f4;--text2:#8b909a;--text3:#555b66;
+  --accent:#00c896;--accent2:#00a87e;--accent-dim:rgba(0,200,150,0.12);
+  --danger:#ff5e5e;--danger-dim:rgba(255,94,94,0.12);
+  --warn:#f5a623;--warn-dim:rgba(245,166,35,0.12);
+  --info:#4f9cf9;--info-dim:rgba(79,156,249,0.12);
+  --radius:10px;--radius-lg:16px;
+  --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
+
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:50;}
+.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border);}
+.sidebar-logo .brand{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.3px;}
+.sidebar-logo .sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.nav{padding:12px 10px;flex:1;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius);cursor:pointer;color:var(--text2);font-size:13px;font-weight:400;transition:all 0.15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;font-family:var(--font);}
+.nav-item:hover{background:var(--bg3);color:var(--text);}
+.nav-item.active{background:var(--accent-dim);color:var(--accent);font-weight:500;}
+.nav-icon{width:16px;height:16px;flex-shrink:0;}
+.sidebar-footer{padding:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px;}
+.accent-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:6px;box-shadow:0 0 8px var(--accent);}
+
+.sync-status{display:flex;align-items:center;gap:7px;font-size:11px;padding:7px 10px;border-radius:var(--radius);background:var(--bg3);color:var(--text3);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:all 0.3s;}
+.sync-dot.ok{background:var(--accent);box-shadow:0 0 6px var(--accent);}
+.sync-dot.syncing{background:var(--warn);animation:pulse 1s infinite;}
+.sync-dot.error{background:var(--danger);}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+.main{margin-left:220px;min-height:100vh;}
+.topbar{position:sticky;top:0;z-index:40;background:rgba(13,15,18,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;}
+.topbar-title{font-size:15px;font-weight:500;color:var(--text);}
+.topbar-actions{display:flex;gap:8px;align-items:center;}
+
+.page{display:none;padding:28px;}
+.page.active{display:block;}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--ac,var(--accent)),transparent);}
+.kpi.warn{--ac:var(--warn);}
+.kpi.info{--ac:var(--info);}
+.kpi-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;}
+.kpi-value{font-size:26px;font-weight:600;color:var(--text);font-family:var(--mono);letter-spacing:-1px;}
+.kpi-value.green{color:var(--accent);}
+.kpi-sub{font-size:12px;color:var(--text3);margin-top:6px;}
+
+.charts-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:24px;}
+.charts-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;}
+.chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.chart-title{font-size:13px;font-weight:500;color:var(--text);}
+.chart-sub{font-size:11px;color:var(--text3);}
+.chart-wrap{position:relative;height:220px;}
+.chart-wrap-sm{position:relative;height:200px;}
+
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:20px;}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-size:13px;font-weight:500;color:var(--text);}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;padding:10px 14px;font-size:11px;font-weight:500;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap;text-transform:uppercase;letter-spacing:0.06em;}
+td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text2);font-size:13px;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg3);color:var(--text);}
+.td-mono{font-family:var(--mono);font-size:12px;}
+.td-green{color:var(--accent);font-family:var(--mono);font-size:12px;}
+
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+.badge-Pendiente{background:var(--warn-dim);color:var(--warn);}
+.badge-Enviado{background:var(--info-dim);color:var(--info);}
+.badge-Entregado{background:var(--accent-dim);color:var(--accent);}
+.badge-Cancelado{background:var(--danger-dim);color:var(--danger);}
+
+.btn{font-family:var(--font);font-size:13px;font-weight:500;padding:8px 16px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;}
+.btn:hover{background:rgba(255,255,255,0.07);color:var(--text);}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-accent{background:var(--accent);color:#0d0f12;border-color:var(--accent);font-weight:600;}
+.btn-accent:hover{background:var(--accent2);border-color:var(--accent2);color:#0d0f12;}
+.btn-danger{border-color:var(--danger);color:var(--danger);background:var(--danger-dim);}
+.btn-danger:hover{background:rgba(255,94,94,0.2);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.btn-ghost{border-color:transparent;background:transparent;}
+.btn-ghost:hover{background:var(--bg3);border-color:var(--border);}
+.btn-google{background:#fff;color:#3c3c3c;border-color:#ddd;font-weight:500;gap:10px;}
+.btn-google:hover{background:#f5f5f5;color:#222;}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group.full{grid-column:1/-1;}
+.form-group label{font-size:12px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;}
+.form-group input,.form-group select,.form-group textarea{font-family:var(--font);font-size:13px;padding:9px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg);color:var(--text);outline:none;transition:border-color 0.15s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
+.form-group textarea{resize:vertical;min-height:64px;}
+select option{background:var(--bg2);}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+
+.filter-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.filter-bar .form-group{margin:0;min-width:140px;}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.overlay.open{display:flex;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:28px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
+.modal-title{font-size:17px;font-weight:600;color:var(--text);}
+.modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;line-height:1;}
+.modal-close:hover{color:var(--text);}
+
+/* LOGIN */
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);}
+.login-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:44px;width:400px;text-align:center;}
+.login-logo{font-size:40px;margin-bottom:12px;}
+.login-title{font-size:24px;font-weight:600;color:var(--text);margin-bottom:8px;letter-spacing:-0.5px;}
+.login-sub{font-size:13px;color:var(--text3);margin-bottom:32px;line-height:1.75;}
+.login-features{display:flex;flex-direction:column;gap:8px;margin-bottom:28px;text-align:left;}
+.login-feature{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);}
+.login-feature-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.login-divider{height:1px;background:var(--border);margin:24px 0;}
+.login-note{font-size:11px;color:var(--text3);margin-top:14px;line-height:1.7;}
+
+.toast-wrap{position:fixed;bottom:24px;right:24px;z-index:300;display:flex;flex-direction:column;gap:8px;}
+.toast{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:12px 16px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px;animation:slideIn 0.3s ease;min-width:240px;max-width:340px;}
+.toast.success{border-left:3px solid var(--accent);}
+.toast.error{border-left:3px solid var(--danger);}
+.toast.warn{border-left:3px solid var(--warn);}
+@keyframes slideIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+
+.empty{text-align:center;padding:52px 20px;color:var(--text3);}
+.empty-icon{font-size:36px;margin-bottom:12px;opacity:0.3;}
+.trunc{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.section-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;}
+
+@media(max-width:900px){
+  .sidebar{width:60px;}
+  .sidebar-logo .brand,.sidebar-logo .sub,.nav-item span,.sync-status span{display:none;}
+  .main{margin-left:60px;}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .charts-grid,.charts-grid2{grid-template-columns:1fr;}
+}
+@media(max-width:600px){
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .form-grid{grid-template-columns:1fr;}
+  .form-group.full{grid-column:1;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">🏭</div>
+    <div class="login-title">FabriControl</div>
+    <div class="login-sub">Gestión de pedidos con sincronización automática en Google Sheets.</div>
+
+    <div class="login-features">
+      <div class="login-feature"><div class="login-feature-dot"></div>Registros en tiempo real en tu hoja de cálculo</div>
+      <div class="login-feature"><div class="login-feature-dot"></div>Cálculo automático de ganancia del 1%</div>
+      <div class="login-feature"><div class="login-feature-dot"></div>Gráficos y dashboard con métricas clave</div>
+      <div class="login-feature"><div class="login-feature-dot"></div>Filtros, edición y eliminación sincronizados</div>
+    </div>
+
+    <button class="btn btn-google" style="width:100%;justify-content:center;padding:13px;font-size:14px;" onclick="signIn()">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Iniciar sesión con Google
+    </button>
+    <div class="login-note">Al iniciar sesión se escribirán los encabezados en tu Google Sheet y cada pedido se sincronizará automáticamente.</div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app" style="display:none;">
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="brand"><span class="accent-dot"></span>FabriControl</div>
+    <div class="sub">Gestión de pedidos</div>
+  </div>
+  <nav class="nav">
+    <button class="nav-item active" onclick="showPage('dashboard')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
+      <span>Dashboard</span>
+    </button>
+    <button class="nav-item" onclick="showPage('pedidos')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h12M2 8h12M2 13h8"/></svg>
+      <span>Pedidos</span>
+    </button>
+    <button class="nav-item" onclick="showPage('nuevo')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>
+      <span>Nuevo pedido</span>
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sync-status">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-text">Desconectado</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="loadFromSheets()" style="width:100%;justify-content:center;">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 1 0 6-6"/><path d="M2 4v4h4"/></svg>
+      <span>Recargar Sheets</span>
+    </button>
+    <button class="btn btn-ghost btn-sm" onclick="exportExcel()" style="width:100%;justify-content:center;">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 10V2M5 7l3 3 3-3M2 12h12v2H2z"/></svg>
+      <span>Exportar Excel</span>
+    </button>
+    <button class="btn btn-ghost btn-sm" onclick="signOut()" style="width:100%;justify-content:center;">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H2v12h4M11 11l3-3-3-3M14 8H6"/></svg>
+      <span>Cerrar sesión</span>
+    </button>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div class="topbar-actions">
+      <div style="font-size:12px;color:var(--text3);" id="user-info"></div>
+      <button class="btn btn-accent" onclick="showPage('nuevo')">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v12M2 8h12"/></svg>
+        Nuevo pedido
+      </button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div style="margin-bottom:20px;">
+      <div style="font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.5px;">Resumen general</div>
+      <div style="font-size:13px;color:var(--text3);margin-top:3px;">Sincronizado con Google Sheets en tiempo real</div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Total pedidos</div><div class="kpi-value" id="kpi-total">0</div><div class="kpi-sub">registros activos</div></div>
+      <div class="kpi"><div class="kpi-label">Monto total</div><div class="kpi-value" id="kpi-monto">$0</div><div class="kpi-sub">en dólares</div></div>
+      <div class="kpi"><div class="kpi-label">Ganancia 1%</div><div class="kpi-value green" id="kpi-ganancia">$0</div><div class="kpi-sub">comisión acumulada</div></div>
+      <div class="kpi warn"><div class="kpi-label">Pendientes</div><div class="kpi-value" id="kpi-pendientes">0</div><div class="kpi-sub">sin despachar</div></div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-header"><div><div class="chart-title">Monto mensual (USD)</div><div class="chart-sub">Últimos 6 meses</div></div></div>
+        <div class="chart-wrap"><canvas id="chart-mensual"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div><div class="chart-title">Estado de pedidos</div><div class="chart-sub">Distribución actual</div></div></div>
+        <div class="chart-wrap-sm"><canvas id="chart-estado"></canvas></div>
+      </div>
+    </div>
+    <div class="charts-grid2">
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-title">Ganancia mensual 1% (USD)</div></div>
+        <div class="chart-wrap"><canvas id="chart-ganancia"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div class="chart-title">Top clientes por monto</div></div>
+        <div class="chart-wrap"><canvas id="chart-clientes"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Últimos pedidos</span>
+        <button class="btn btn-ghost btn-sm" onclick="showPage('pedidos')">Ver todos →</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>Contacto</th><th>Monto</th><th>Ganancia</th><th>Estado</th></tr></thead>
+          <tbody id="tbody-recientes"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PEDIDOS -->
+  <div class="page" id="page-pedidos">
+    <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.5px;">Todos los pedidos</div>
+        <div style="font-size:13px;color:var(--text3);margin-top:3px;" id="pedidos-count">0 registros</div>
+      </div>
+      <button class="btn" onclick="exportExcel()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 10V2M5 7l3 3 3-3M2 12h12v2H2z"/></svg>
+        Exportar Excel
+      </button>
+    </div>
+    <div class="card" style="padding:16px 20px;margin-bottom:16px;">
+      <div class="section-label">Filtros</div>
+      <div class="filter-bar">
+        <div class="form-group"><label>Desde</label><input type="date" id="fil-desde" onchange="renderAll()" /></div>
+        <div class="form-group"><label>Hasta</label><input type="date" id="fil-hasta" onchange="renderAll()" /></div>
+        <div class="form-group"><label>Estado</label>
+          <select id="fil-estado" onchange="renderAll()">
+            <option value="">Todos</option><option>Pendiente</option><option>Enviado</option><option>Entregado</option><option>Cancelado</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Buscar</label><input type="text" id="fil-buscar" placeholder="Cliente o factura..." oninput="renderAll()" /></div>
+        <div class="form-group" style="justify-content:flex-end;"><label>&nbsp;</label><button class="btn" onclick="clearFilters()">Limpiar</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>Contacto fábrica</th><th>Descripción</th><th style="text-align:right">Monto</th><th style="text-align:right">Ganancia 1%</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody id="tbody-all"></tbody>
+        </table>
+      </div>
+      <div id="empty-all" class="empty" style="display:none;"><div class="empty-icon">📦</div><p>Sin resultados para los filtros aplicados.</p></div>
+    </div>
+  </div>
+
+  <!-- NUEVO PEDIDO -->
+  <div class="page" id="page-nuevo">
+    <div style="margin-bottom:24px;">
+      <div style="font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.5px;">Nuevo pedido</div>
+      <div style="font-size:13px;color:var(--text3);margin-top:3px;">Se sincronizará automáticamente con Google Sheets al guardar</div>
+    </div>
+    <div class="card" style="padding:24px;max-width:680px;">
+      <div class="form-grid">
+        <div class="form-group"><label>N° de factura</label><input type="text" id="f-factura" placeholder="FAC-00123" /></div>
+        <div class="form-group"><label>Fecha del pedido</label><input type="date" id="f-fecha" /></div>
+        <div class="form-group"><label>Cliente / Proveedor *</label><input type="text" id="f-cliente" placeholder="Nombre del cliente o fábrica" /></div>
+        <div class="form-group"><label>Contacto de fábrica</label><input type="text" id="f-contacto" placeholder="Nombre, teléfono o email" /></div>
+        <div class="form-group"><label>Monto (USD) *</label><input type="number" id="f-monto" placeholder="0.00" min="0" step="0.01" /></div>
+        <div class="form-group"><label>Estado</label>
+          <select id="f-estado"><option>Pendiente</option><option>Enviado</option><option>Entregado</option><option>Cancelado</option></select>
+        </div>
+        <div class="form-group full"><label>Descripción / Detalle</label><textarea id="f-descripcion" placeholder="Productos, cantidades, notas..."></textarea></div>
+      </div>
+
+      <div id="preview-ganancia" style="display:none;background:var(--accent-dim);border:1px solid rgba(0,200,150,0.2);border-radius:var(--radius);padding:12px 16px;margin-top:14px;align-items:center;justify-content:space-between;">
+        <span style="font-size:13px;color:var(--accent);">Ganancia estimada (1%)</span>
+        <span style="font-size:18px;font-weight:600;color:var(--accent);font-family:var(--mono);" id="preview-val">$0.00</span>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn" onclick="clearForm()">Limpiar</button>
+        <button class="btn btn-accent" onclick="addPedido()">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2v12M2 8h12"/></svg>
+          Agregar y sincronizar
+        </button>
+      </div>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- MODAL EDITAR -->
+<div class="overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Editar pedido</div><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="form-grid">
+      <div class="form-group"><label>N° de factura</label><input type="text" id="e-factura" /></div>
+      <div class="form-group"><label>Fecha</label><input type="date" id="e-fecha" /></div>
+      <div class="form-group"><label>Cliente / Proveedor</label><input type="text" id="e-cliente" /></div>
+      <div class="form-group"><label>Contacto de fábrica</label><input type="text" id="e-contacto" /></div>
+      <div class="form-group"><label>Monto (USD)</label><input type="number" id="e-monto" step="0.01" /></div>
+      <div class="form-group"><label>Estado</label>
+        <select id="e-estado"><option>Pendiente</option><option>Enviado</option><option>Entregado</option><option>Cancelado</option></select>
+      </div>
+      <div class="form-group full"><label>Descripción</label><textarea id="e-descripcion"></textarea></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-accent" onclick="saveEdit()">Guardar y sincronizar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+// ══════ CONFIG ══════
+const CLIENT_ID  = '443769856364-7iq7dkvl58sm641r00ok9gjulg5simps.apps.googleusercontent.com';
+const SHEET_ID   = '1sfzhNTXyp_zVKDvLb-xhUpibfBBBjRFWUIHXHIqTnOA';
+const SHEET_NAME = 'Pedidos';
+const SCOPES     = 'https://www.googleapis.com/auth/spreadsheets';
+const HEADERS    = ['ID','N° Factura','Fecha','Cliente','Contacto fábrica','Descripción','Monto (USD)','Ganancia 1% (USD)','Estado'];
+
+// ══════ STATE ══════
+let pedidos = [], editId = null, accessToken = null;
+let chartMensual, chartEstado, chartGanancia, chartClientes;
+
+// ══════ UTILS ══════
+const $ = id => document.getElementById(id);
+const fmtUSD = n => '$' + Number(n).toLocaleString('es-PY',{minimumFractionDigits:2,maximumFractionDigits:2});
+const genId  = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const today  = () => new Date().toISOString().split('T')[0];
+const badge  = e => ({'Pendiente':'badge-Pendiente','Enviado':'badge-Enviado','Entregado':'badge-Entregado','Cancelado':'badge-Cancelado'}[e]||'');
+
+function toast(msg, type='success') {
+  const w = $('toasts'), t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  w.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function setSyncStatus(state, text) {
+  $('sync-dot').className = 'sync-dot ' + state;
+  $('sync-text').textContent = text;
+}
+
+// ══════ AUTH ══════
+function signIn() {
+  google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: async (resp) => {
+      if (resp.error) { toast('Error al iniciar sesión: ' + resp.error, 'error'); return; }
+      accessToken = resp.access_token;
+      $('login-screen').style.display = 'none';
+      $('app').style.display = 'block';
+      setSyncStatus('syncing', 'Conectando...');
+      await initSheet();
+      await loadFromSheets();
+    }
+  }).requestAccessToken();
+}
+
+function signOut() {
+  if (accessToken) google.accounts.oauth2.revoke(accessToken);
+  accessToken = null; pedidos = [];
+  $('app').style.display = 'none';
+  $('login-screen').style.display = 'flex';
+  setSyncStatus('', 'Desconectado');
+}
+
+// ══════ SHEETS API ══════
+async function api(method, endpoint, body) {
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}${endpoint}`, {
+    method,
+    headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error((e.error && e.error.message) || res.statusText);
+  }
+  return res.status === 204 ? {} : res.json();
+}
+
+async function initSheet() {
+  try {
+    const d = await api('GET', `/values/${encodeURIComponent(SHEET_NAME)}!A1:A1`);
+    const v = d.values;
+    if (!v || !v[0] || v[0][0] !== 'ID') {
+      await api('PUT', `/values/${encodeURIComponent(SHEET_NAME)}!A1:I1?valueInputOption=RAW`, { values: [HEADERS] });
+    }
+  } catch(e) {
+    try {
+      await api('POST', ':batchUpdate', { requests: [{ addSheet: { properties: { title: SHEET_NAME } } }] });
+      await api('PUT', `/values/${encodeURIComponent(SHEET_NAME)}!A1:I1?valueInputOption=RAW`, { values: [HEADERS] });
+    } catch(e2) { console.warn('initSheet:', e2.message); }
+  }
+}
+
+async function loadFromSheets() {
+  setSyncStatus('syncing', 'Cargando...');
+  try {
+    const d = await api('GET', `/values/${encodeURIComponent(SHEET_NAME)}!A2:I2000`);
+    pedidos = (d.values || []).filter(r => r[0]).map(r => ({
+      id: r[0]||'', factura: r[1]||'', fecha: r[2]||'', cliente: r[3]||'',
+      contacto: r[4]||'', descripcion: r[5]||'', monto: parseFloat(r[6])||0, estado: r[8]||'Pendiente'
+    }));
+    save(); renderAll(); updateDashboard();
+    setSyncStatus('ok', 'Sincronizado');
+    toast(`${pedidos.length} pedidos cargados desde Sheets.`);
+  } catch(e) {
+    setSyncStatus('error', 'Error');
+    toast('Error al cargar desde Sheets: ' + e.message, 'error');
+  }
+}
+
+async function appendRow(p) {
+  setSyncStatus('syncing', 'Guardando...');
+  try {
+    await api('POST', `/values/${encodeURIComponent(SHEET_NAME)}!A:I:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
+      values: [[p.id, p.factura, p.fecha, p.cliente, p.contacto, p.descripcion, p.monto, +(p.monto*0.01).toFixed(2), p.estado]]
+    });
+    setSyncStatus('ok', 'Sincronizado');
+  } catch(e) { setSyncStatus('error','Error sync'); toast('No se pudo sincronizar: '+e.message,'error'); }
+}
+
+async function updateRow(p) {
+  setSyncStatus('syncing', 'Actualizando...');
+  try {
+    const ids = await api('GET', `/values/${encodeURIComponent(SHEET_NAME)}!A:A`);
+    const arr = (ids.values || []).map(r => r[0]);
+    const idx = arr.indexOf(p.id);
+    if (idx < 1) { toast('Fila no encontrada en Sheets.','error'); return; }
+    await api('PUT', `/values/${encodeURIComponent(SHEET_NAME)}!A${idx+1}:I${idx+1}?valueInputOption=RAW`, {
+      values: [[p.id, p.factura, p.fecha, p.cliente, p.contacto, p.descripcion, p.monto, +(p.monto*0.01).toFixed(2), p.estado]]
+    });
+    setSyncStatus('ok', 'Sincronizado');
+  } catch(e) { setSyncStatus('error','Error sync'); toast('Error al actualizar: '+e.message,'error'); }
+}
+
+async function deleteRow(id) {
+  setSyncStatus('syncing', 'Eliminando...');
+  try {
+    const ids = await api('GET', `/values/${encodeURIComponent(SHEET_NAME)}!A:A`);
+    const arr = (ids.values || []).map(r => r[0]);
+    const idx = arr.indexOf(id);
+    if (idx < 1) return;
+    const meta = await api('GET', '?fields=sheets.properties');
+    const sheet = meta.sheets.find(s => s.properties.title === SHEET_NAME);
+    if (!sheet) return;
+    await api('POST', ':batchUpdate', {
+      requests: [{ deleteDimension: { range: { sheetId: sheet.properties.sheetId, dimension:'ROWS', startIndex: idx, endIndex: idx+1 } } }]
+    });
+    setSyncStatus('ok', 'Sincronizado');
+  } catch(e) { setSyncStatus('error','Error sync'); toast('Error al eliminar en Sheets: '+e.message,'error'); }
+}
+
+// ══════ LOCAL STORAGE ══════
+function save() { try { localStorage.setItem('fc_v2', JSON.stringify(pedidos)); } catch(e) {} }
+function loadLocal() { try { const d = localStorage.getItem('fc_v2'); if(d) pedidos = JSON.parse(d); } catch(e) {} }
+
+// ══════ NAV ══════
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+  $('page-'+p).classList.add('active');
+  $('topbar-title').textContent = {dashboard:'Dashboard',pedidos:'Pedidos',nuevo:'Nuevo pedido'}[p]||'';
+  document.querySelectorAll('.nav-item').forEach(el => {
+    if ((el.getAttribute('onclick')||'').includes(`'${p}'`)) el.classList.add('active');
+  });
+  if (p==='dashboard') updateDashboard();
+  if (p==='pedidos') renderAll();
+}
+
+// ══════ CRUD ══════
+async function addPedido() {
+  const cliente = $('f-cliente').value.trim();
+  const fecha   = $('f-fecha').value;
+  const monto   = parseFloat($('f-monto').value);
+  if (!cliente||!fecha||isNaN(monto)||monto<=0) { toast('Completá cliente, fecha y monto.','error'); return; }
+  const p = { id:genId(), factura:$('f-factura').value.trim(), cliente, contacto:$('f-contacto').value.trim(),
+    fecha, monto, estado:$('f-estado').value, descripcion:$('f-descripcion').value.trim() };
+  pedidos.push(p); save(); clearForm(); renderAll(); updateDashboard();
+  toast('Pedido guardado. Sincronizando con Sheets...');
+  await appendRow(p);
+  showPage('pedidos');
+}
+
+async function deletePedido(id) {
+  if (!confirm('¿Eliminar este pedido? Esta acción no se puede deshacer.')) return;
+  pedidos = pedidos.filter(p => p.id !== id);
+  save(); renderAll(); updateDashboard();
+  toast('Pedido eliminado.');
+  await deleteRow(id);
+}
+
+function openEdit(id) {
+  const p = pedidos.find(x=>x.id===id); if (!p) return;
+  editId = id;
+  $('e-factura').value=p.factura||''; $('e-cliente').value=p.cliente;
+  $('e-contacto').value=p.contacto||''; $('e-fecha').value=p.fecha;
+  $('e-monto').value=p.monto; $('e-estado').value=p.estado;
+  $('e-descripcion').value=p.descripcion||'';
+  $('modal-overlay').classList.add('open');
+}
+
+function closeModal() { $('modal-overlay').classList.remove('open'); editId=null; }
+
+async function saveEdit() {
+  const idx = pedidos.findIndex(x=>x.id===editId); if (idx<0) return;
+  const monto = parseFloat($('e-monto').value);
+  if (isNaN(monto)||monto<=0) { toast('Monto inválido.','error'); return; }
+  pedidos[idx] = { ...pedidos[idx], factura:$('e-factura').value.trim(), cliente:$('e-cliente').value.trim(),
+    contacto:$('e-contacto').value.trim(), fecha:$('e-fecha').value, monto,
+    estado:$('e-estado').value, descripcion:$('e-descripcion').value.trim() };
+  save(); closeModal(); renderAll(); updateDashboard();
+  toast('Pedido actualizado. Sincronizando...');
+  await updateRow(pedidos[idx]);
+}
+
+$('modal-overlay').addEventListener('click', e => { if(e.target===$('modal-overlay')) closeModal(); });
+
+function clearForm() {
+  ['f-factura','f-cliente','f-contacto','f-monto','f-descripcion'].forEach(id=>$(id).value='');
+  $('f-fecha').value=today(); $('f-estado').value='Pendiente';
+  $('preview-ganancia').style.display='none';
+}
+
+$('f-monto').addEventListener('input', function() {
+  const v = parseFloat(this.value), pg=$('preview-ganancia');
+  if (!isNaN(v)&&v>0) { pg.style.display='flex'; $('preview-val').textContent=fmtUSD(v*0.01); }
+  else pg.style.display='none';
+});
+
+// ══════ FILTERS ══════
+function getFiltered() {
+  const desde=$('fil-desde').value, hasta=$('fil-hasta').value,
+        estado=$('fil-estado').value, buscar=($('fil-buscar').value||'').toLowerCase();
+  return pedidos.filter(p => {
+    if (desde&&p.fecha<desde) return false;
+    if (hasta&&p.fecha>hasta) return false;
+    if (estado&&p.estado!==estado) return false;
+    if (buscar&&!p.cliente.toLowerCase().includes(buscar)&&!(p.factura||'').toLowerCase().includes(buscar)) return false;
+    return true;
+  });
+}
+function clearFilters() {
+  ['fil-desde','fil-hasta','fil-buscar'].forEach(id=>$(id).value='');
+  $('fil-estado').value=''; renderAll();
+}
+
+// ══════ RENDER ══════
+function renderAll() {
+  const filtered = getFiltered().sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const tbody=$('tbody-all'), empty=$('empty-all');
+  $('pedidos-count').textContent=`${filtered.length} registro${filtered.length!==1?'s':''}`;
+  if (!filtered.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  tbody.innerHTML = filtered.map(p=>`<tr>
+    <td class="td-mono">${p.factura||'—'}</td>
+    <td>${p.fecha}</td>
+    <td class="trunc" title="${p.cliente}">${p.cliente}</td>
+    <td class="trunc" title="${p.contacto||''}">${p.contacto||'—'}</td>
+    <td class="trunc" title="${p.descripcion||''}">${p.descripcion||'—'}</td>
+    <td style="text-align:right" class="td-mono">${fmtUSD(p.monto)}</td>
+    <td style="text-align:right" class="td-green">${fmtUSD(p.monto*0.01)}</td>
+    <td><span class="badge ${badge(p.estado)}">${p.estado}</span></td>
+    <td><div style="display:flex;gap:6px;">
+      <button class="btn btn-sm" onclick="openEdit('${p.id}')">Editar</button>
+      <button class="btn btn-sm btn-danger" onclick="deletePedido('${p.id}')">Eliminar</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+// ══════ DASHBOARD ══════
+function updateDashboard() {
+  const monto = pedidos.reduce((s,p)=>s+p.monto,0);
+  $('kpi-total').textContent=pedidos.length;
+  $('kpi-monto').textContent=fmtUSD(monto);
+  $('kpi-ganancia').textContent=fmtUSD(monto*0.01);
+  $('kpi-pendientes').textContent=pedidos.filter(p=>p.estado==='Pendiente').length;
+
+  const rec=[...pedidos].sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,6);
+  $('tbody-recientes').innerHTML=rec.length
+    ? rec.map(p=>`<tr>
+        <td class="td-mono">${p.factura||'—'}</td><td>${p.fecha}</td><td>${p.cliente}</td>
+        <td class="trunc">${p.contacto||'—'}</td>
+        <td class="td-mono" style="text-align:right">${fmtUSD(p.monto)}</td>
+        <td class="td-green" style="text-align:right">${fmtUSD(p.monto*0.01)}</td>
+        <td><span class="badge ${badge(p.estado)}">${p.estado}</span></td>
+      </tr>`).join('')
+    : `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text3);">Sin pedidos aún</td></tr>`;
+
+  buildCharts();
+}
+
+// ══════ CHARTS ══════
+function getMonthly() {
+  const months={}, now=new Date();
+  for (let i=5;i>=0;i--) {
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    months[`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`]=0;
+  }
+  pedidos.forEach(p=>{ const k=p.fecha.slice(0,7); if(months[k]!==undefined) months[k]+=p.monto; });
+  return months;
+}
+
+function buildCharts() {
+  const monthly=getMonthly();
+  const labels=Object.keys(monthly).map(k=>{const[y,m]=k.split('-');return new Date(y,m-1).toLocaleDateString('es-PY',{month:'short',year:'2-digit'});});
+  const montos=Object.values(monthly);
+  const ganancias=montos.map(v=>v*0.01);
+
+  const base={responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a1e25',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#eef0f4',bodyColor:'#8b909a',padding:10}},
+    scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555b66',font:{size:11}}},
+            y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555b66',font:{size:11},callback:v=>'$'+v.toLocaleString()}}}};
+
+  if(chartMensual) chartMensual.destroy();
+  chartMensual=new Chart($('chart-mensual'),{type:'bar',data:{labels,datasets:[{data:montos,backgroundColor:'rgba(0,200,150,0.25)',borderColor:'#00c896',borderWidth:2,borderRadius:6,hoverBackgroundColor:'rgba(0,200,150,0.4)'}]},options:{...base}});
+
+  const estados=['Pendiente','Enviado','Entregado','Cancelado'];
+  if(chartEstado) chartEstado.destroy();
+  chartEstado=new Chart($('chart-estado'),{type:'doughnut',data:{labels:estados,datasets:[{data:estados.map(e=>pedidos.filter(p=>p.estado===e).length),backgroundColor:['rgba(245,166,35,0.8)','rgba(79,156,249,0.8)','rgba(0,200,150,0.8)','rgba(255,94,94,0.8)'],borderColor:'#13161b',borderWidth:3,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{color:'#8b909a',font:{size:11},boxWidth:10,padding:12}},tooltip:{backgroundColor:'#1a1e25',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#eef0f4',bodyColor:'#8b909a',padding:10}},cutout:'68%'}});
+
+  if(chartGanancia) chartGanancia.destroy();
+  chartGanancia=new Chart($('chart-ganancia'),{type:'line',data:{labels,datasets:[{data:ganancias,borderColor:'#00c896',backgroundColor:'rgba(0,200,150,0.08)',borderWidth:2,pointBackgroundColor:'#00c896',pointRadius:4,tension:0.4,fill:true}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...base.scales.y.ticks,callback:v=>'$'+v.toFixed(2)}}}}});
+
+  const cm={};
+  pedidos.forEach(p=>{cm[p.cliente]=(cm[p.cliente]||0)+p.monto;});
+  const sorted=Object.entries(cm).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  if(chartClientes) chartClientes.destroy();
+  chartClientes=new Chart($('chart-clientes'),{type:'bar',data:{labels:sorted.map(([k])=>k.length>14?k.slice(0,13)+'…':k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:['rgba(0,200,150,0.7)','rgba(79,156,249,0.7)','rgba(245,166,35,0.7)','rgba(255,94,94,0.7)','rgba(147,112,219,0.7)'],borderRadius:6,borderWidth:0}]},options:{...base,indexAxis:'y',scales:{x:{...base.scales.x,ticks:{...base.scales.x.ticks,callback:v=>'$'+v.toLocaleString()}},y:{...base.scales.y,grid:{display:false}}}}});
+}
+
+// ══════ EXPORT ══════
+function exportExcel() {
+  if(!pedidos.length){toast('No hay datos.','error');return;}
+  const monto=pedidos.reduce((s,p)=>s+p.monto,0);
+  const rows=[...pedidos].sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(p=>({
+    'N° Factura':p.factura||'',Fecha:p.fecha,'Cliente / Proveedor':p.cliente,
+    'Contacto fábrica':p.contacto||'',Descripción:p.descripcion||'',
+    'Monto (USD)':p.monto,'Ganancia 1% (USD)':parseFloat((p.monto*0.01).toFixed(2)),Estado:p.estado
+  }));
+  rows.push({});
+  rows.push({'N° Factura':'TOTALES',Fecha:'','Cliente / Proveedor':'','Contacto fábrica':'',Descripción:'',
+    'Monto (USD)':parseFloat(monto.toFixed(2)),'Ganancia 1% (USD)':parseFloat((monto*0.01).toFixed(2)),Estado:''});
+  const wb=XLSX.utils.book_new(), ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:14},{wch:12},{wch:26},{wch:22},{wch:28},{wch:14},{wch:16},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws,'Pedidos');
+  XLSX.writeFile(wb,'pedidos_fabrica.xlsx');
+  toast('Excel exportado.');
+}
+
+// ══════ INIT ══════
+loadLocal();
+$('f-fecha').value=today();
+updateDashboard();
+</script>
+</body>
+</html>
