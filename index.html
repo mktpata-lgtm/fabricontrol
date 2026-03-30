@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>FabriControl</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
-:root {
+:root{
   --bg:#0d0f12;--bg2:#13161b;--bg3:#1a1e25;
   --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
   --text:#eef0f4;--text2:#8b909a;--text3:#555b66;
@@ -17,6 +17,7 @@
   --danger:#ff5e5e;--danger-dim:rgba(255,94,94,0.12);
   --warn:#f5a623;--warn-dim:rgba(245,166,35,0.12);
   --info:#4f9cf9;--info-dim:rgba(79,156,249,0.12);
+  --purple:#a78bfa;--purple-dim:rgba(167,139,250,0.12);
   --radius:10px;--radius-lg:16px;
   --font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
 }
@@ -24,18 +25,20 @@
 html{scroll-behavior:smooth;}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;}
 
-.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:50;}
-.sidebar-logo{padding:24px 20px 20px;border-bottom:1px solid var(--border);}
+/* SIDEBAR */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:50;overflow-y:auto;}
+.sidebar-logo{padding:22px 20px 18px;border-bottom:1px solid var(--border);}
 .sidebar-logo .brand{font-size:15px;font-weight:600;color:var(--text);letter-spacing:-0.3px;}
 .sidebar-logo .sub{font-size:11px;color:var(--text3);margin-top:2px;}
 .nav{padding:12px 10px;flex:1;}
+.nav-section{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;padding:10px 12px 4px;}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius);cursor:pointer;color:var(--text2);font-size:13px;font-weight:400;transition:all 0.15s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;font-family:var(--font);}
 .nav-item:hover{background:var(--bg3);color:var(--text);}
 .nav-item.active{background:var(--accent-dim);color:var(--accent);font-weight:500;}
+.nav-item.active-purple{background:var(--purple-dim);color:var(--purple);font-weight:500;}
 .nav-icon{width:16px;height:16px;flex-shrink:0;}
 .sidebar-footer{padding:12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:6px;}
 .accent-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;margin-right:6px;box-shadow:0 0 8px var(--accent);}
-
 .sync-status{display:flex;align-items:center;gap:7px;font-size:11px;padding:7px 10px;border-radius:var(--radius);background:var(--bg3);color:var(--text3);}
 .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:all 0.3s;}
 .sync-dot.ok{background:var(--accent);box-shadow:0 0 6px var(--accent);}
@@ -43,24 +46,28 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .sync-dot.error{background:var(--danger);}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
 
+/* MAIN */
 .main{margin-left:220px;min-height:100vh;}
 .topbar{position:sticky;top:0;z-index:40;background:rgba(13,15,18,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;}
 .topbar-title{font-size:15px;font-weight:500;color:var(--text);}
 .topbar-actions{display:flex;gap:8px;align-items:center;}
-
 .page{display:none;padding:28px;}
 .page.active{display:block;}
 
+/* KPI */
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
 .kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;position:relative;overflow:hidden;}
 .kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--ac,var(--accent)),transparent);}
 .kpi.warn{--ac:var(--warn);}
 .kpi.info{--ac:var(--info);}
+.kpi.purple{--ac:var(--purple);}
 .kpi-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;}
 .kpi-value{font-size:26px;font-weight:600;color:var(--text);font-family:var(--mono);letter-spacing:-1px;}
 .kpi-value.green{color:var(--accent);}
+.kpi-value.purple{color:var(--purple);}
 .kpi-sub{font-size:12px;color:var(--text3);margin-top:6px;}
 
+/* CHARTS */
 .charts-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:16px;margin-bottom:24px;}
 .charts-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
 .chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;}
@@ -70,6 +77,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .chart-wrap{position:relative;height:220px;}
 .chart-wrap-sm{position:relative;height:200px;}
 
+/* CARDS / TABLE */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:20px;}
 .card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .card-title{font-size:13px;font-weight:500;color:var(--text);}
@@ -82,18 +90,29 @@ tr:hover td{background:var(--bg3);color:var(--text);}
 .td-mono{font-family:var(--mono);font-size:12px;}
 .td-green{color:var(--accent);font-family:var(--mono);font-size:12px;}
 
-.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;white-space:nowrap;}
 .badge::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
 .badge-Pendiente{background:var(--warn-dim);color:var(--warn);}
 .badge-Enviado{background:var(--info-dim);color:var(--info);}
 .badge-Entregado{background:var(--accent-dim);color:var(--accent);}
 .badge-Cancelado{background:var(--danger-dim);color:var(--danger);}
+/* producción */
+.badge-prod-0{background:var(--bg3);color:var(--text3);}
+.badge-prod-1{background:var(--warn-dim);color:var(--warn);}
+.badge-prod-2{background:var(--info-dim);color:var(--info);}
+.badge-prod-3{background:var(--purple-dim);color:var(--purple);}
+.badge-prod-4{background:var(--accent-dim);color:var(--accent);}
+.badge-late{background:var(--danger-dim);color:var(--danger);}
 
+/* BUTTONS */
 .btn{font-family:var(--font);font-size:13px;font-weight:500;padding:8px 16px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);cursor:pointer;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;}
 .btn:hover{background:rgba(255,255,255,0.07);color:var(--text);}
 .btn:disabled{opacity:0.4;cursor:not-allowed;}
 .btn-accent{background:var(--accent);color:#0d0f12;border-color:var(--accent);font-weight:600;}
 .btn-accent:hover{background:var(--accent2);border-color:var(--accent2);color:#0d0f12;}
+.btn-purple{background:var(--purple-dim);color:var(--purple);border-color:var(--purple);}
+.btn-purple:hover{background:rgba(167,139,250,0.2);}
 .btn-danger{border-color:var(--danger);color:var(--danger);background:var(--danger-dim);}
 .btn-danger:hover{background:rgba(255,94,94,0.2);}
 .btn-sm{padding:5px 10px;font-size:12px;}
@@ -102,7 +121,9 @@ tr:hover td{background:var(--bg3);color:var(--text);}
 .btn-google{background:#fff;color:#3c3c3c;border-color:#ddd;font-weight:500;gap:10px;}
 .btn-google:hover{background:#f5f5f5;color:#222;}
 
+/* FORM */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
 .form-group{display:flex;flex-direction:column;gap:6px;}
 .form-group.full{grid-column:1/-1;}
 .form-group label{font-size:12px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;}
@@ -111,17 +132,70 @@ tr:hover td{background:var(--bg3);color:var(--text);}
 .form-group textarea{resize:vertical;min-height:64px;}
 select option{background:var(--bg2);}
 .form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+.form-section{margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+.form-section-title{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.form-section-title span{display:inline-block;width:18px;height:18px;border-radius:50%;background:var(--accent-dim);color:var(--accent);font-size:10px;font-weight:600;text-align:center;line-height:18px;}
+.form-section-title.purple-title span{background:var(--purple-dim);color:var(--purple);}
 
+/* FILTER */
 .filter-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
 .filter-bar .form-group{margin:0;min-width:140px;}
 
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;align-items:flex-start;justify-content:center;backdrop-filter:blur(4px);overflow-y:auto;padding:24px 16px;}
 .overlay.open{display:flex;}
-.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:28px;width:90%;max-width:560px;max-height:90vh;overflow-y:auto;}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:28px;width:90%;max-width:680px;margin:auto;}
 .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;}
 .modal-title{font-size:17px;font-weight:600;color:var(--text);}
 .modal-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:22px;line-height:1;}
 .modal-close:hover{color:var(--text);}
+
+/* TIMELINE / PRODUCCIÓN */
+.timeline{display:flex;flex-direction:column;gap:0;}
+.tl-step{display:flex;gap:16px;position:relative;}
+.tl-left{display:flex;flex-direction:column;align-items:center;width:32px;flex-shrink:0;}
+.tl-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;z-index:1;}
+.tl-dot.done{background:var(--accent);color:#0d0f12;}
+.tl-dot.active{background:var(--warn);color:#0d0f12;}
+.tl-dot.late{background:var(--danger);color:#fff;}
+.tl-dot.pending{background:var(--bg3);color:var(--text3);border:1px solid var(--border2);}
+.tl-line{flex:1;width:2px;background:var(--border);margin:2px 0;}
+.tl-content{padding:0 0 24px 4px;flex:1;}
+.tl-label{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.tl-date{font-size:12px;font-family:var(--mono);color:var(--text3);}
+.tl-days{font-size:11px;margin-top:4px;}
+.tl-days.ok{color:var(--accent);}
+.tl-days.late{color:var(--danger);}
+.tl-days.pending{color:var(--text3);}
+
+/* PROD CARD */
+.prod-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:16px;}
+.prod-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px;}
+.prod-card-info{}
+.prod-card-title{font-size:14px;font-weight:500;color:var(--text);}
+.prod-card-sub{font-size:12px;color:var(--text3);margin-top:3px;}
+.prod-progress{margin-bottom:16px;}
+.prog-bar-bg{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;}
+.prog-bar-fill{height:100%;border-radius:3px;transition:width 0.5s ease;}
+.prog-label{display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:5px;}
+.date-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.date-chip{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:6px 10px;font-size:11px;}
+.date-chip-label{color:var(--text3);margin-bottom:2px;}
+.date-chip-val{font-family:var(--mono);color:var(--text);font-size:12px;}
+.date-chip-days{font-size:10px;margin-top:2px;}
+
+/* GUIA IMPORTACION */
+.guide-step{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:12px;display:flex;gap:16px;transition:border-color 0.2s;}
+.guide-step:hover{border-color:var(--border2);}
+.guide-num{width:36px;height:36px;border-radius:50%;background:var(--purple-dim);color:var(--purple);font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.guide-body{}
+.guide-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:6px;}
+.guide-desc{font-size:13px;color:var(--text2);line-height:1.65;}
+.guide-tips{margin-top:10px;display:flex;flex-direction:column;gap:4px;}
+.guide-tip{font-size:12px;color:var(--text3);display:flex;gap:6px;align-items:flex-start;}
+.guide-tip::before{content:'→';color:var(--purple);flex-shrink:0;}
+.guide-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.guide-tag{background:var(--purple-dim);color:var(--purple);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;}
 
 /* LOGIN */
 .login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);}
@@ -132,9 +206,8 @@ select option{background:var(--bg2);}
 .login-features{display:flex;flex-direction:column;gap:8px;margin-bottom:28px;text-align:left;}
 .login-feature{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text2);}
 .login-feature-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;}
-.login-divider{height:1px;background:var(--border);margin:24px 0;}
-.login-note{font-size:11px;color:var(--text3);margin-top:14px;line-height:1.7;}
 
+/* TOAST */
 .toast-wrap{position:fixed;bottom:24px;right:24px;z-index:300;display:flex;flex-direction:column;gap:8px;}
 .toast{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius);padding:12px 16px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:10px;animation:slideIn 0.3s ease;min-width:240px;max-width:340px;}
 .toast.success{border-left:3px solid var(--accent);}
@@ -146,54 +219,56 @@ select option{background:var(--bg2);}
 .empty-icon{font-size:36px;margin-bottom:12px;opacity:0.3;}
 .trunc{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .section-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;}
+.page-title{font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.5px;}
+.page-sub{font-size:13px;color:var(--text3);margin-top:3px;}
+.page-header{margin-bottom:22px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
 
-@media(max-width:900px){
+@media(max-width:960px){
   .sidebar{width:60px;}
-  .sidebar-logo .brand,.sidebar-logo .sub,.nav-item span,.sync-status span{display:none;}
+  .sidebar-logo .brand,.sidebar-logo .sub,.nav-item span,.nav-section,.sync-status span{display:none;}
   .main{margin-left:60px;}
   .kpi-grid{grid-template-columns:repeat(2,1fr);}
   .charts-grid,.charts-grid2{grid-template-columns:1fr;}
+  .form-grid-3{grid-template-columns:1fr 1fr;}
 }
 @media(max-width:600px){
   .kpi-grid{grid-template-columns:1fr 1fr;}
-  .form-grid{grid-template-columns:1fr;}
+  .form-grid,.form-grid-3{grid-template-columns:1fr;}
   .form-group.full{grid-column:1;}
+  .page{padding:16px;}
 }
 </style>
 </head>
 <body>
 
-<!-- ═══ LOGIN ═══ -->
+<!-- LOGIN -->
 <div class="login-screen" id="login-screen">
   <div class="login-card">
     <div class="login-logo">🏭</div>
     <div class="login-title">FabriControl</div>
-    <div class="login-sub">Gestión de pedidos con sincronización automática en Google Sheets.</div>
-
+    <div class="login-sub">Gestión de pedidos + seguimiento de producción e importación desde China.</div>
     <div class="login-features">
-      <div class="login-feature"><div class="login-feature-dot"></div>Registros en tiempo real en tu hoja de cálculo</div>
-      <div class="login-feature"><div class="login-feature-dot"></div>Cálculo automático de ganancia del 1%</div>
-      <div class="login-feature"><div class="login-feature-dot"></div>Gráficos y dashboard con métricas clave</div>
-      <div class="login-feature"><div class="login-feature-dot"></div>Filtros, edición y eliminación sincronizados</div>
+      <div class="login-feature"><div class="login-feature-dot"></div>Sincronización en tiempo real con Google Sheets</div>
+      <div class="login-feature"><div class="login-feature-dot"></div>Informe de producción con timeline y fechas clave</div>
+      <div class="login-feature"><div class="login-feature-dot"></div>Cálculo automático de tiempos y alertas de demoras</div>
+      <div class="login-feature"><div class="login-feature-dot"></div>Guía paso a paso para importaciones desde China</div>
     </div>
-
     <button class="btn btn-google" style="width:100%;justify-content:center;padding:13px;font-size:14px;" onclick="signIn()">
       <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
       Iniciar sesión con Google
     </button>
-    <div class="login-note">Al iniciar sesión se escribirán los encabezados en tu Google Sheet y cada pedido se sincronizará automáticamente.</div>
   </div>
 </div>
 
-<!-- ═══ APP ═══ -->
+<!-- APP -->
 <div id="app" style="display:none;">
-
 <aside class="sidebar">
   <div class="sidebar-logo">
     <div class="brand"><span class="accent-dot"></span>FabriControl</div>
-    <div class="sub">Gestión de pedidos</div>
+    <div class="sub">Importaciones</div>
   </div>
   <nav class="nav">
+    <div class="nav-section">Principal</div>
     <button class="nav-item active" onclick="showPage('dashboard')">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>
       <span>Dashboard</span>
@@ -206,15 +281,22 @@ select option{background:var(--bg2);}
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>
       <span>Nuevo pedido</span>
     </button>
+    <div class="nav-section">Producción</div>
+    <button class="nav-item" onclick="showPage('produccion')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 2"/></svg>
+      <span>Seguimiento</span>
+    </button>
+    <div class="nav-section">Importación</div>
+    <button class="nav-item" onclick="showPage('guia')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h8a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zm2 4h4M6 8h4M6 11h2"/></svg>
+      <span>Guía pro</span>
+    </button>
   </nav>
   <div class="sidebar-footer">
-    <div class="sync-status">
-      <div class="sync-dot" id="sync-dot"></div>
-      <span id="sync-text">Desconectado</span>
-    </div>
+    <div class="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Desconectado</span></div>
     <button class="btn btn-ghost btn-sm" onclick="loadFromSheets()" style="width:100%;justify-content:center;">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8a6 6 0 1 0 6-6"/><path d="M2 4v4h4"/></svg>
-      <span>Recargar Sheets</span>
+      <span>Recargar</span>
     </button>
     <button class="btn btn-ghost btn-sm" onclick="exportExcel()" style="width:100%;justify-content:center;">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 10V2M5 7l3 3 3-3M2 12h12v2H2z"/></svg>
@@ -222,7 +304,7 @@ select option{background:var(--bg2);}
     </button>
     <button class="btn btn-ghost btn-sm" onclick="signOut()" style="width:100%;justify-content:center;">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H2v12h4M11 11l3-3-3-3M14 8H6"/></svg>
-      <span>Cerrar sesión</span>
+      <span>Salir</span>
     </button>
   </div>
 </aside>
@@ -239,17 +321,14 @@ select option{background:var(--bg2);}
     </div>
   </div>
 
-  <!-- DASHBOARD -->
+  <!-- ═══ DASHBOARD ═══ -->
   <div class="page active" id="page-dashboard">
-    <div style="margin-bottom:20px;">
-      <div style="font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.5px;">Resumen general</div>
-      <div style="font-size:13px;color:var(--text3);margin-top:3px;">Sincronizado con Google Sheets en tiempo real</div>
-    </div>
+    <div class="page-header"><div><div class="page-title">Resumen general</div><div class="page-sub">Sincronizado con Google Sheets en tiempo real</div></div></div>
     <div class="kpi-grid">
-      <div class="kpi"><div class="kpi-label">Total pedidos</div><div class="kpi-value" id="kpi-total">0</div><div class="kpi-sub">registros activos</div></div>
+      <div class="kpi"><div class="kpi-label">Total pedidos</div><div class="kpi-value" id="kpi-total">0</div><div class="kpi-sub">registros</div></div>
       <div class="kpi"><div class="kpi-label">Monto total</div><div class="kpi-value" id="kpi-monto">$0</div><div class="kpi-sub">en dólares</div></div>
-      <div class="kpi"><div class="kpi-label">Ganancia 1%</div><div class="kpi-value green" id="kpi-ganancia">$0</div><div class="kpi-sub">comisión acumulada</div></div>
-      <div class="kpi warn"><div class="kpi-label">Pendientes</div><div class="kpi-value" id="kpi-pendientes">0</div><div class="kpi-sub">sin despachar</div></div>
+      <div class="kpi"><div class="kpi-label">Ganancia 1%</div><div class="kpi-value green" id="kpi-ganancia">$0</div><div class="kpi-sub">comisión</div></div>
+      <div class="kpi warn"><div class="kpi-label">En producción</div><div class="kpi-value" id="kpi-produccion">0</div><div class="kpi-sub">pedidos activos</div></div>
     </div>
     <div class="charts-grid">
       <div class="chart-card">
@@ -257,93 +336,93 @@ select option{background:var(--bg2);}
         <div class="chart-wrap"><canvas id="chart-mensual"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-header"><div><div class="chart-title">Estado de pedidos</div><div class="chart-sub">Distribución actual</div></div></div>
+        <div class="chart-header"><div><div class="chart-title">Estado de pedidos</div></div></div>
         <div class="chart-wrap-sm"><canvas id="chart-estado"></canvas></div>
       </div>
     </div>
     <div class="charts-grid2">
       <div class="chart-card">
-        <div class="chart-header"><div class="chart-title">Ganancia mensual 1% (USD)</div></div>
+        <div class="chart-header"><div class="chart-title">Ganancia mensual 1%</div></div>
         <div class="chart-wrap"><canvas id="chart-ganancia"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-header"><div class="chart-title">Top clientes por monto</div></div>
+        <div class="chart-header"><div class="chart-title">Top clientes</div></div>
         <div class="chart-wrap"><canvas id="chart-clientes"></canvas></div>
       </div>
     </div>
     <div class="card">
-      <div class="card-header">
-        <span class="card-title">Últimos pedidos</span>
-        <button class="btn btn-ghost btn-sm" onclick="showPage('pedidos')">Ver todos →</button>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>Contacto</th><th>Monto</th><th>Ganancia</th><th>Estado</th></tr></thead>
-          <tbody id="tbody-recientes"></tbody>
-        </table>
-      </div>
+      <div class="card-header"><span class="card-title">Últimos pedidos</span><button class="btn btn-ghost btn-sm" onclick="showPage('pedidos')">Ver todos →</button></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>Contacto</th><th>Monto</th><th>Ganancia</th><th>Estado</th><th>Producción</th></tr></thead>
+        <tbody id="tbody-recientes"></tbody>
+      </table></div>
     </div>
   </div>
 
-  <!-- PEDIDOS -->
+  <!-- ═══ PEDIDOS ═══ -->
   <div class="page" id="page-pedidos">
-    <div style="margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;">
-      <div>
-        <div style="font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.5px;">Todos los pedidos</div>
-        <div style="font-size:13px;color:var(--text3);margin-top:3px;" id="pedidos-count">0 registros</div>
-      </div>
+    <div class="page-header">
+      <div><div class="page-title">Todos los pedidos</div><div class="page-sub" id="pedidos-count">0 registros</div></div>
       <button class="btn" onclick="exportExcel()">
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 10V2M5 7l3 3 3-3M2 12h12v2H2z"/></svg>
-        Exportar Excel
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 10V2M5 7l3 3 3-3M2 12h12v2H2z"/></svg>Exportar Excel
       </button>
     </div>
     <div class="card" style="padding:16px 20px;margin-bottom:16px;">
       <div class="section-label">Filtros</div>
       <div class="filter-bar">
-        <div class="form-group"><label>Desde</label><input type="date" id="fil-desde" onchange="renderAll()" /></div>
-        <div class="form-group"><label>Hasta</label><input type="date" id="fil-hasta" onchange="renderAll()" /></div>
+        <div class="form-group"><label>Desde</label><input type="date" id="fil-desde" onchange="renderAll()"/></div>
+        <div class="form-group"><label>Hasta</label><input type="date" id="fil-hasta" onchange="renderAll()"/></div>
         <div class="form-group"><label>Estado</label>
           <select id="fil-estado" onchange="renderAll()">
             <option value="">Todos</option><option>Pendiente</option><option>Enviado</option><option>Entregado</option><option>Cancelado</option>
           </select>
         </div>
-        <div class="form-group"><label>Buscar</label><input type="text" id="fil-buscar" placeholder="Cliente o factura..." oninput="renderAll()" /></div>
+        <div class="form-group"><label>Buscar</label><input type="text" id="fil-buscar" placeholder="Cliente o factura..." oninput="renderAll()"/></div>
         <div class="form-group" style="justify-content:flex-end;"><label>&nbsp;</label><button class="btn" onclick="clearFilters()">Limpiar</button></div>
       </div>
     </div>
     <div class="card">
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>Contacto fábrica</th><th>Descripción</th><th style="text-align:right">Monto</th><th style="text-align:right">Ganancia 1%</th><th>Estado</th><th>Acciones</th></tr></thead>
-          <tbody id="tbody-all"></tbody>
-        </table>
-      </div>
-      <div id="empty-all" class="empty" style="display:none;"><div class="empty-icon">📦</div><p>Sin resultados para los filtros aplicados.</p></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>Contacto</th><th>Descripción</th><th style="text-align:right">Monto</th><th style="text-align:right">Ganancia 1%</th><th>Estado</th><th>Producción</th><th>Acciones</th></tr></thead>
+        <tbody id="tbody-all"></tbody>
+      </table></div>
+      <div id="empty-all" class="empty" style="display:none;"><div class="empty-icon">📦</div><p>Sin resultados.</p></div>
     </div>
   </div>
 
-  <!-- NUEVO PEDIDO -->
+  <!-- ═══ NUEVO PEDIDO ═══ -->
   <div class="page" id="page-nuevo">
-    <div style="margin-bottom:24px;">
-      <div style="font-size:22px;font-weight:600;color:var(--text);letter-spacing:-0.5px;">Nuevo pedido</div>
-      <div style="font-size:13px;color:var(--text3);margin-top:3px;">Se sincronizará automáticamente con Google Sheets al guardar</div>
-    </div>
-    <div class="card" style="padding:24px;max-width:680px;">
-      <div class="form-grid">
-        <div class="form-group"><label>N° de factura</label><input type="text" id="f-factura" placeholder="FAC-00123" /></div>
-        <div class="form-group"><label>Fecha del pedido</label><input type="date" id="f-fecha" /></div>
-        <div class="form-group"><label>Cliente / Proveedor *</label><input type="text" id="f-cliente" placeholder="Nombre del cliente o fábrica" /></div>
-        <div class="form-group"><label>Contacto de fábrica</label><input type="text" id="f-contacto" placeholder="Nombre, teléfono o email" /></div>
-        <div class="form-group"><label>Monto (USD) *</label><input type="number" id="f-monto" placeholder="0.00" min="0" step="0.01" /></div>
-        <div class="form-group"><label>Estado</label>
-          <select id="f-estado"><option>Pendiente</option><option>Enviado</option><option>Entregado</option><option>Cancelado</option></select>
+    <div class="page-header"><div><div class="page-title">Nuevo pedido</div><div class="page-sub">Se sincronizará con Google Sheets al guardar</div></div></div>
+    <div class="card" style="padding:24px;max-width:720px;">
+
+      <div class="form-section">
+        <div class="form-section-title"><span>1</span>Datos del pedido</div>
+        <div class="form-grid">
+          <div class="form-group"><label>N° de factura</label><input type="text" id="f-factura" placeholder="FAC-00123"/></div>
+          <div class="form-group"><label>Fecha del pedido</label><input type="date" id="f-fecha"/></div>
+          <div class="form-group"><label>Cliente / Proveedor *</label><input type="text" id="f-cliente" placeholder="Nombre del cliente o fábrica"/></div>
+          <div class="form-group"><label>Contacto de fábrica</label><input type="text" id="f-contacto" placeholder="Nombre, teléfono o email"/></div>
+          <div class="form-group"><label>Monto (USD) *</label><input type="number" id="f-monto" placeholder="0.00" min="0" step="0.01"/></div>
+          <div class="form-group"><label>Estado</label>
+            <select id="f-estado"><option>Pendiente</option><option>Enviado</option><option>Entregado</option><option>Cancelado</option></select>
+          </div>
+          <div class="form-group full"><label>Descripción / Detalle</label><textarea id="f-descripcion" placeholder="Productos, cantidades, notas..."></textarea></div>
         </div>
-        <div class="form-group full"><label>Descripción / Detalle</label><textarea id="f-descripcion" placeholder="Productos, cantidades, notas..."></textarea></div>
+        <div id="preview-ganancia" style="display:none;background:var(--accent-dim);border:1px solid rgba(0,200,150,0.2);border-radius:var(--radius);padding:12px 16px;margin-top:14px;align-items:center;justify-content:space-between;">
+          <span style="font-size:13px;color:var(--accent);">Ganancia estimada (1%)</span>
+          <span style="font-size:18px;font-weight:600;color:var(--accent);font-family:var(--mono);" id="preview-val">$0.00</span>
+        </div>
       </div>
 
-      <div id="preview-ganancia" style="display:none;background:var(--accent-dim);border:1px solid rgba(0,200,150,0.2);border-radius:var(--radius);padding:12px 16px;margin-top:14px;align-items:center;justify-content:space-between;">
-        <span style="font-size:13px;color:var(--accent);">Ganancia estimada (1%)</span>
-        <span style="font-size:18px;font-weight:600;color:var(--accent);font-family:var(--mono);" id="preview-val">$0.00</span>
+      <div class="form-section">
+        <div class="form-section-title purple-title"><span style="background:var(--purple-dim);color:var(--purple);">2</span>Informe de producción</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Envío a fábrica</label><input type="date" id="f-p1" title="Fecha en que se envió el pedido a la fábrica"/></div>
+          <div class="form-group"><label>Delivery time (fin producción)</label><input type="date" id="f-p2" title="Fecha estimada de finalización de producción"/></div>
+          <div class="form-group"><label>Embarque desde China</label><input type="date" id="f-p3" title="Fecha de embarque del barco/avión desde China"/></div>
+          <div class="form-group"><label>Llegada a Paraguay</label><input type="date" id="f-p4" title="Fecha estimada o real de llegada a Paraguay"/></div>
+        </div>
+        <div class="form-group" style="margin-top:12px;"><label>Observaciones de producción</label><textarea id="f-pobs" placeholder="Notas sobre el proceso productivo, demoras, cambios..."></textarea></div>
       </div>
 
       <div class="form-actions">
@@ -356,6 +435,135 @@ select option{background:var(--bg2);}
     </div>
   </div>
 
+  <!-- ═══ PRODUCCIÓN / SEGUIMIENTO ═══ -->
+  <div class="page" id="page-produccion">
+    <div class="page-header">
+      <div><div class="page-title">Seguimiento de producción</div><div class="page-sub">Tiempos, fechas clave y alertas por pedido</div></div>
+      <div style="display:flex;gap:8px;">
+        <select id="prod-filtro" onchange="renderProduccion()" style="font-family:var(--font);font-size:13px;padding:8px 12px;border-radius:var(--radius);border:1px solid var(--border2);background:var(--bg3);color:var(--text2);outline:none;">
+          <option value="">Todos los pedidos</option>
+          <option value="activo">En producción</option>
+          <option value="demorado">Demorados</option>
+          <option value="completo">Completados</option>
+        </select>
+      </div>
+    </div>
+    <div id="prod-container"></div>
+    <div id="prod-empty" class="empty" style="display:none;"><div class="empty-icon">🏭</div><p>No hay pedidos con informe de producción aún.</p></div>
+  </div>
+
+  <!-- ═══ GUÍA IMPORTACIÓN ═══ -->
+  <div class="page" id="page-guia">
+    <div class="page-header">
+      <div><div class="page-title">Guía pro de importación</div><div class="page-sub">Paso a paso para importar desde China a Paraguay</div></div>
+    </div>
+
+    <div class="kpi-grid" style="margin-bottom:24px;">
+      <div class="kpi info"><div class="kpi-label">Tiempo promedio</div><div class="kpi-value" style="color:var(--info);">45–60</div><div class="kpi-sub">días desde fábrica</div></div>
+      <div class="kpi warn"><div class="kpi-label">Lead time producción</div><div class="kpi-value" style="color:var(--warn);">25–35</div><div class="kpi-sub">días hábiles</div></div>
+      <div class="kpi purple"><div class="kpi-label">Tránsito marítimo</div><div class="kpi-value purple">30–40</div><div class="kpi-sub">días hasta PY</div></div>
+      <div class="kpi"><div class="kpi-label">Despacho en aduana</div><div class="kpi-value">5–10</div><div class="kpi-sub">días hábiles</div></div>
+    </div>
+
+    <div class="guide-step">
+      <div class="guide-num">1</div>
+      <div class="guide-body">
+        <div class="guide-title">Confirmación y pago al proveedor</div>
+        <div class="guide-desc">Una vez acordado el precio y condiciones, se emite la Proforma Invoice y se realiza el depósito (generalmente 30% adelanto, 70% contra B/L o antes del embarque).</div>
+        <div class="guide-tips">
+          <div class="guide-tip">Negociá siempre en USD. Evitá pagos por Western Union; usá transferencia SWIFT o Alibaba Trade Assurance.</div>
+          <div class="guide-tip">Pedí siempre Proforma Invoice firmada antes de pagar cualquier monto.</div>
+          <div class="guide-tip">Verificá el proveedor en Alibaba Gold Supplier o pedí auditoría de fábrica.</div>
+        </div>
+        <div class="guide-tags"><span class="guide-tag">Proforma Invoice</span><span class="guide-tag">SWIFT</span><span class="guide-tag">Trade Assurance</span></div>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <div class="guide-num">2</div>
+      <div class="guide-body">
+        <div class="guide-title">Producción en fábrica</div>
+        <div class="guide-desc">El proveedor inicia la producción. El lead time promedio es de 25 a 35 días hábiles según el volumen. Es clave hacer seguimiento activo y pedir fotos o video de avance.</div>
+        <div class="guide-tips">
+          <div class="guide-tip">Acordá hitos de producción: muestra aprobada, 50% producido, 100% terminado.</div>
+          <div class="guide-tip">Solicitá inspección de calidad (QC) antes del empaque. Hay servicios como QIMA o SGS.</div>
+          <div class="guide-tip">Confirmá el packaging y marcado de cajas según normativa paraguaya (SENAVE, INTN).</div>
+        </div>
+        <div class="guide-tags"><span class="guide-tag">Lead Time</span><span class="guide-tag">QC Inspection</span><span class="guide-tag">QIMA/SGS</span></div>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <div class="guide-num">3</div>
+      <div class="guide-body">
+        <div class="guide-title">Preparación y embarque desde China</div>
+        <div class="guide-desc">La mercadería se embarca en contenedor (FCL si llenás el contenedor, LCL si compartís). El agente de carga emite el Bill of Lading (B/L), documento clave para el despacho.</div>
+        <div class="guide-tips">
+          <div class="guide-tip">Puertos principales: Shanghai, Shenzhen, Guangzhou, Ningbo. Destino usual: Buenos Aires o Santos, luego terrestre a Asunción.</div>
+          <div class="guide-tip">Solicitá al exportador: Packing List, Commercial Invoice, B/L, Certificado de Origen (Form A si aplica arancel reducido).</div>
+          <div class="guide-tip">El incoterm más común para importadores nuevos es FOB (vos pagás flete y seguro) o CIF (el proveedor incluye flete y seguro).</div>
+        </div>
+        <div class="guide-tags"><span class="guide-tag">Bill of Lading</span><span class="guide-tag">FCL/LCL</span><span class="guide-tag">FOB / CIF</span><span class="guide-tag">Packing List</span></div>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <div class="guide-num">4</div>
+      <div class="guide-body">
+        <div class="guide-title">Tránsito marítimo</div>
+        <div class="guide-desc">El barco tarda entre 30 y 40 días desde China hasta el puerto de Buenos Aires o Santos. Desde ahí, el flete terrestre hasta Asunción tarda entre 3 y 7 días adicionales.</div>
+        <div class="guide-tips">
+          <div class="guide-tip">Hacé seguimiento del contenedor con el número de booking o B/L en el sitio de la naviera (MSC, Maersk, COSCO, etc.).</div>
+          <div class="guide-tip">Contratá seguro de carga internacional para proteger tu inversión durante el tránsito.</div>
+          <div class="guide-tip">Avisá a tu despachante en Paraguay con 2 semanas de anticipación al arribo para preparar la documentación.</div>
+        </div>
+        <div class="guide-tags"><span class="guide-tag">MSC / Maersk</span><span class="guide-tag">Tracking</span><span class="guide-tag">Seguro de carga</span></div>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <div class="guide-num">5</div>
+      <div class="guide-body">
+        <div class="guide-title">Despacho aduanero en Paraguay</div>
+        <div class="guide-desc">Al llegar la mercadería, el despachante aduanero presenta la Declaración Aduanera de Importación (DAI) ante la DNA (Dirección Nacional de Aduanas). El proceso toma entre 5 y 10 días hábiles.</div>
+        <div class="guide-tips">
+          <div class="guide-tip">Documentos necesarios: Factura Comercial, Packing List, B/L o AWB, Certificado de Origen, y según producto: SENAVE, SENACSA, INAN o INTN.</div>
+          <div class="guide-tip">Los tributos a pagar son: Arancel de importación (0%–20% según producto), IVA (10%), Tasa de Valoración.</div>
+          <div class="guide-tip">Productos textiles, electrónicos y juguetes tienen mayor control. Asegurate que el etiquetado esté en castellano.</div>
+        </div>
+        <div class="guide-tags"><span class="guide-tag">DNA Aduana</span><span class="guide-tag">DAI</span><span class="guide-tag">IVA 10%</span><span class="guide-tag">SENAVE/INTN</span></div>
+      </div>
+    </div>
+
+    <div class="guide-step">
+      <div class="guide-num">6</div>
+      <div class="guide-body">
+        <div class="guide-title">Retiro y distribución en Paraguay</div>
+        <div class="guide-desc">Una vez liberada la mercadería por aduana, se retira del depósito fiscal o zona franca y se distribuye según tus acuerdos comerciales.</div>
+        <div class="guide-tips">
+          <div class="guide-tip">Verificá físicamente la mercadería antes de firmar el retiro del depósito.</div>
+          <div class="guide-tip">Emitís factura de venta a tus clientes con IVA correspondiente (5% o 10% según producto).</div>
+          <div class="guide-tip">Guardá toda la documentación aduanera por mínimo 5 años según normativa SET.</div>
+        </div>
+        <div class="guide-tags"><span class="guide-tag">Depósito fiscal</span><span class="guide-tag">SET Paraguay</span><span class="guide-tag">Factura</span></div>
+      </div>
+    </div>
+
+    <div style="background:var(--purple-dim);border:1px solid rgba(167,139,250,0.2);border-radius:var(--radius-lg);padding:20px;margin-top:8px;">
+      <div style="font-size:13px;font-weight:500;color:var(--purple);margin-bottom:10px;">Documentos clave para toda importación</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;">
+        <div style="background:var(--bg3);border-radius:var(--radius);padding:10px;font-size:12px;color:var(--text2);">📄 Proforma Invoice</div>
+        <div style="background:var(--bg3);border-radius:var(--radius);padding:10px;font-size:12px;color:var(--text2);">📄 Commercial Invoice</div>
+        <div style="background:var(--bg3);border-radius:var(--radius);padding:10px;font-size:12px;color:var(--text2);">📄 Packing List</div>
+        <div style="background:var(--bg3);border-radius:var(--radius);padding:10px;font-size:12px;color:var(--text2);">🚢 Bill of Lading (B/L)</div>
+        <div style="background:var(--bg3);border-radius:var(--radius);padding:10px;font-size:12px;color:var(--text2);">📋 Certificado de Origen</div>
+        <div style="background:var(--bg3);border-radius:var(--radius);padding:10px;font-size:12px;color:var(--text2);">🛃 DAI (Aduana PY)</div>
+        <div style="background:var(--bg3);border-radius:var(--radius);padding:10px;font-size:12px;color:var(--text2);">🔒 Póliza de seguro</div>
+        <div style="background:var(--bg3);border-radius:var(--radius);padding:10px;font-size:12px;color:var(--text2);">✅ Habilitaciones SENAVE/INTN</div>
+      </div>
+    </div>
+  </div>
+
 </main>
 </div>
 
@@ -363,17 +571,33 @@ select option{background:var(--bg2);}
 <div class="overlay" id="modal-overlay">
   <div class="modal">
     <div class="modal-header"><div class="modal-title">Editar pedido</div><button class="modal-close" onclick="closeModal()">×</button></div>
-    <div class="form-grid">
-      <div class="form-group"><label>N° de factura</label><input type="text" id="e-factura" /></div>
-      <div class="form-group"><label>Fecha</label><input type="date" id="e-fecha" /></div>
-      <div class="form-group"><label>Cliente / Proveedor</label><input type="text" id="e-cliente" /></div>
-      <div class="form-group"><label>Contacto de fábrica</label><input type="text" id="e-contacto" /></div>
-      <div class="form-group"><label>Monto (USD)</label><input type="number" id="e-monto" step="0.01" /></div>
-      <div class="form-group"><label>Estado</label>
-        <select id="e-estado"><option>Pendiente</option><option>Enviado</option><option>Entregado</option><option>Cancelado</option></select>
+
+    <div class="form-section">
+      <div class="form-section-title"><span>1</span>Datos del pedido</div>
+      <div class="form-grid">
+        <div class="form-group"><label>N° de factura</label><input type="text" id="e-factura"/></div>
+        <div class="form-group"><label>Fecha</label><input type="date" id="e-fecha"/></div>
+        <div class="form-group"><label>Cliente / Proveedor</label><input type="text" id="e-cliente"/></div>
+        <div class="form-group"><label>Contacto de fábrica</label><input type="text" id="e-contacto"/></div>
+        <div class="form-group"><label>Monto (USD)</label><input type="number" id="e-monto" step="0.01"/></div>
+        <div class="form-group"><label>Estado</label>
+          <select id="e-estado"><option>Pendiente</option><option>Enviado</option><option>Entregado</option><option>Cancelado</option></select>
+        </div>
+        <div class="form-group full"><label>Descripción</label><textarea id="e-descripcion"></textarea></div>
       </div>
-      <div class="form-group full"><label>Descripción</label><textarea id="e-descripcion"></textarea></div>
     </div>
+
+    <div class="form-section" style="border-bottom:none;margin-bottom:0;padding-bottom:0;">
+      <div class="form-section-title purple-title"><span style="background:var(--purple-dim);color:var(--purple);">2</span>Informe de producción</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Envío a fábrica</label><input type="date" id="e-p1"/></div>
+        <div class="form-group"><label>Delivery time (fin producción)</label><input type="date" id="e-p2"/></div>
+        <div class="form-group"><label>Embarque desde China</label><input type="date" id="e-p3"/></div>
+        <div class="form-group"><label>Llegada a Paraguay</label><input type="date" id="e-p4"/></div>
+      </div>
+      <div class="form-group" style="margin-top:12px;"><label>Observaciones de producción</label><textarea id="e-pobs"></textarea></div>
+    </div>
+
     <div class="form-actions">
       <button class="btn" onclick="closeModal()">Cancelar</button>
       <button class="btn btn-accent" onclick="saveEdit()">Guardar y sincronizar</button>
@@ -389,336 +613,452 @@ const CLIENT_ID  = '443769856364-7iq7dkvl58sm641r00ok9gjulg5simps.apps.googleuse
 const SHEET_ID   = '1sfzhNTXyp_zVKDvLb-xhUpibfBBBjRFWUIHXHIqTnOA';
 const SHEET_NAME = 'Pedidos';
 const SCOPES     = 'https://www.googleapis.com/auth/spreadsheets';
-const HEADERS    = ['ID','N° Factura','Fecha','Cliente','Contacto fábrica','Descripción','Monto (USD)','Ganancia 1% (USD)','Estado'];
+const HEADERS    = ['ID','N° Factura','Fecha','Cliente','Contacto fábrica','Descripción','Monto (USD)','Ganancia 1% (USD)','Estado','Envío a fábrica','Delivery time','Embarque China','Llegada Paraguay','Obs. Producción'];
 
 // ══════ STATE ══════
-let pedidos = [], editId = null, accessToken = null;
+let pedidos=[], editId=null, accessToken=null;
 let chartMensual, chartEstado, chartGanancia, chartClientes;
 
 // ══════ UTILS ══════
 const $ = id => document.getElementById(id);
-const fmtUSD = n => '$' + Number(n).toLocaleString('es-PY',{minimumFractionDigits:2,maximumFractionDigits:2});
-const genId  = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const fmtUSD = n => '$'+Number(n).toLocaleString('es-PY',{minimumFractionDigits:2,maximumFractionDigits:2});
+const genId  = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const today  = () => new Date().toISOString().split('T')[0];
 const badge  = e => ({'Pendiente':'badge-Pendiente','Enviado':'badge-Enviado','Entregado':'badge-Entregado','Cancelado':'badge-Cancelado'}[e]||'');
 
-function toast(msg, type='success') {
-  const w = $('toasts'), t = document.createElement('div');
-  t.className = `toast ${type}`;
-  t.textContent = msg;
-  w.appendChild(t);
-  setTimeout(() => t.remove(), 4000);
+function diffDays(a, b) {
+  if (!a||!b) return null;
+  return Math.round((new Date(b)-new Date(a))/(1000*60*60*24));
+}
+function daysFromToday(d) {
+  if (!d) return null;
+  return Math.round((new Date(d)-new Date())/(1000*60*60*24));
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  const [y,m,dd] = d.split('-');
+  return `${dd}/${m}/${y}`;
 }
 
-function setSyncStatus(state, text) {
-  $('sync-dot').className = 'sync-dot ' + state;
-  $('sync-text').textContent = text;
+function prodStage(p) {
+  if (p.p4) return 4;
+  if (p.p3) return 3;
+  if (p.p2) return 2;
+  if (p.p1) return 1;
+  return 0;
+}
+function prodLabel(stage) {
+  return ['Sin inicio','En producción','En tránsito','Embarcado','Entregado'][stage]||'—';
+}
+function prodBadgeClass(stage) {
+  return ['badge-prod-0','badge-prod-1','badge-prod-2','badge-prod-3','badge-prod-4'][stage]||'';
+}
+
+function toast(msg,type='success') {
+  const w=$('toasts'),t=document.createElement('div');
+  t.className=`toast ${type}`; t.textContent=msg;
+  w.appendChild(t); setTimeout(()=>t.remove(),4000);
+}
+function setSyncStatus(state,text) {
+  $('sync-dot').className='sync-dot '+state;
+  $('sync-text').textContent=text;
 }
 
 // ══════ AUTH ══════
 function signIn() {
   google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    callback: async (resp) => {
-      if (resp.error) { toast('Error al iniciar sesión: ' + resp.error, 'error'); return; }
-      accessToken = resp.access_token;
-      $('login-screen').style.display = 'none';
-      $('app').style.display = 'block';
-      setSyncStatus('syncing', 'Conectando...');
+    client_id:CLIENT_ID, scope:SCOPES,
+    callback: async(resp)=>{
+      if(resp.error){toast('Error: '+resp.error,'error');return;}
+      accessToken=resp.access_token;
+      $('login-screen').style.display='none';
+      $('app').style.display='block';
+      setSyncStatus('syncing','Conectando...');
       await initSheet();
       await loadFromSheets();
     }
   }).requestAccessToken();
 }
-
 function signOut() {
-  if (accessToken) google.accounts.oauth2.revoke(accessToken);
-  accessToken = null; pedidos = [];
-  $('app').style.display = 'none';
-  $('login-screen').style.display = 'flex';
-  setSyncStatus('', 'Desconectado');
+  if(accessToken) google.accounts.oauth2.revoke(accessToken);
+  accessToken=null; pedidos=[];
+  $('app').style.display='none';
+  $('login-screen').style.display='flex';
+  setSyncStatus('','Desconectado');
 }
 
 // ══════ SHEETS API ══════
-async function api(method, endpoint, body) {
-  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}${endpoint}`, {
-    method,
-    headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-    body: body ? JSON.stringify(body) : undefined
+async function api(method,endpoint,body) {
+  const res=await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}${endpoint}`,{
+    method,headers:{'Authorization':'Bearer '+accessToken,'Content-Type':'application/json'},
+    body:body?JSON.stringify(body):undefined
   });
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error((e.error && e.error.message) || res.statusText);
-  }
-  return res.status === 204 ? {} : res.json();
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error((e.error&&e.error.message)||res.statusText);}
+  return res.status===204?{}:res.json();
 }
 
 async function initSheet() {
   try {
-    const d = await api('GET', `/values/${encodeURIComponent(SHEET_NAME)}!A1:A1`);
-    const v = d.values;
-    if (!v || !v[0] || v[0][0] !== 'ID') {
-      await api('PUT', `/values/${encodeURIComponent(SHEET_NAME)}!A1:I1?valueInputOption=RAW`, { values: [HEADERS] });
-    }
+    const d=await api('GET',`/values/${encodeURIComponent(SHEET_NAME)}!A1:A1`);
+    if(!d.values||!d.values[0]||d.values[0][0]!=='ID')
+      await api('PUT',`/values/${encodeURIComponent(SHEET_NAME)}!A1:N1?valueInputOption=RAW`,{values:[HEADERS]});
   } catch(e) {
     try {
-      await api('POST', ':batchUpdate', { requests: [{ addSheet: { properties: { title: SHEET_NAME } } }] });
-      await api('PUT', `/values/${encodeURIComponent(SHEET_NAME)}!A1:I1?valueInputOption=RAW`, { values: [HEADERS] });
-    } catch(e2) { console.warn('initSheet:', e2.message); }
+      await api('POST',':batchUpdate',{requests:[{addSheet:{properties:{title:SHEET_NAME}}}]});
+      await api('PUT',`/values/${encodeURIComponent(SHEET_NAME)}!A1:N1?valueInputOption=RAW`,{values:[HEADERS]});
+    } catch(e2){console.warn(e2.message);}
   }
+}
+
+function pToRow(p) {
+  return [p.id,p.factura,p.fecha,p.cliente,p.contacto,p.descripcion,p.monto,+(p.monto*0.01).toFixed(2),p.estado,p.p1||'',p.p2||'',p.p3||'',p.p4||'',p.pobs||''];
 }
 
 async function loadFromSheets() {
-  setSyncStatus('syncing', 'Cargando...');
+  setSyncStatus('syncing','Cargando...');
   try {
-    const d = await api('GET', `/values/${encodeURIComponent(SHEET_NAME)}!A2:I2000`);
-    pedidos = (d.values || []).filter(r => r[0]).map(r => ({
-      id: r[0]||'', factura: r[1]||'', fecha: r[2]||'', cliente: r[3]||'',
-      contacto: r[4]||'', descripcion: r[5]||'', monto: parseFloat(r[6])||0, estado: r[8]||'Pendiente'
+    const d=await api('GET',`/values/${encodeURIComponent(SHEET_NAME)}!A2:N2000`);
+    pedidos=(d.values||[]).filter(r=>r[0]).map(r=>({
+      id:r[0]||'',factura:r[1]||'',fecha:r[2]||'',cliente:r[3]||'',
+      contacto:r[4]||'',descripcion:r[5]||'',monto:parseFloat(r[6])||0,estado:r[8]||'Pendiente',
+      p1:r[9]||'',p2:r[10]||'',p3:r[11]||'',p4:r[12]||'',pobs:r[13]||''
     }));
-    save(); renderAll(); updateDashboard();
-    setSyncStatus('ok', 'Sincronizado');
-    toast(`${pedidos.length} pedidos cargados desde Sheets.`);
-  } catch(e) {
-    setSyncStatus('error', 'Error');
-    toast('Error al cargar desde Sheets: ' + e.message, 'error');
-  }
+    save(); renderAll(); updateDashboard(); renderProduccion();
+    setSyncStatus('ok','Sincronizado');
+    toast(`${pedidos.length} pedidos cargados.`);
+  } catch(e){setSyncStatus('error','Error');toast('Error al cargar: '+e.message,'error');}
 }
 
 async function appendRow(p) {
-  setSyncStatus('syncing', 'Guardando...');
+  setSyncStatus('syncing','Guardando...');
   try {
-    await api('POST', `/values/${encodeURIComponent(SHEET_NAME)}!A:I:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
-      values: [[p.id, p.factura, p.fecha, p.cliente, p.contacto, p.descripcion, p.monto, +(p.monto*0.01).toFixed(2), p.estado]]
-    });
-    setSyncStatus('ok', 'Sincronizado');
-  } catch(e) { setSyncStatus('error','Error sync'); toast('No se pudo sincronizar: '+e.message,'error'); }
+    await api('POST',`/values/${encodeURIComponent(SHEET_NAME)}!A:N:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,{values:[pToRow(p)]});
+    setSyncStatus('ok','Sincronizado');
+  } catch(e){setSyncStatus('error','Error');toast('No se pudo sincronizar: '+e.message,'error');}
 }
 
 async function updateRow(p) {
-  setSyncStatus('syncing', 'Actualizando...');
+  setSyncStatus('syncing','Actualizando...');
   try {
-    const ids = await api('GET', `/values/${encodeURIComponent(SHEET_NAME)}!A:A`);
-    const arr = (ids.values || []).map(r => r[0]);
-    const idx = arr.indexOf(p.id);
-    if (idx < 1) { toast('Fila no encontrada en Sheets.','error'); return; }
-    await api('PUT', `/values/${encodeURIComponent(SHEET_NAME)}!A${idx+1}:I${idx+1}?valueInputOption=RAW`, {
-      values: [[p.id, p.factura, p.fecha, p.cliente, p.contacto, p.descripcion, p.monto, +(p.monto*0.01).toFixed(2), p.estado]]
-    });
-    setSyncStatus('ok', 'Sincronizado');
-  } catch(e) { setSyncStatus('error','Error sync'); toast('Error al actualizar: '+e.message,'error'); }
+    const ids=await api('GET',`/values/${encodeURIComponent(SHEET_NAME)}!A:A`);
+    const arr=(ids.values||[]).map(r=>r[0]);
+    const idx=arr.indexOf(p.id);
+    if(idx<1){toast('Fila no encontrada.','error');return;}
+    await api('PUT',`/values/${encodeURIComponent(SHEET_NAME)}!A${idx+1}:N${idx+1}?valueInputOption=RAW`,{values:[pToRow(p)]});
+    setSyncStatus('ok','Sincronizado');
+  } catch(e){setSyncStatus('error','Error');toast('Error al actualizar: '+e.message,'error');}
 }
 
 async function deleteRow(id) {
-  setSyncStatus('syncing', 'Eliminando...');
+  setSyncStatus('syncing','Eliminando...');
   try {
-    const ids = await api('GET', `/values/${encodeURIComponent(SHEET_NAME)}!A:A`);
-    const arr = (ids.values || []).map(r => r[0]);
-    const idx = arr.indexOf(id);
-    if (idx < 1) return;
-    const meta = await api('GET', '?fields=sheets.properties');
-    const sheet = meta.sheets.find(s => s.properties.title === SHEET_NAME);
-    if (!sheet) return;
-    await api('POST', ':batchUpdate', {
-      requests: [{ deleteDimension: { range: { sheetId: sheet.properties.sheetId, dimension:'ROWS', startIndex: idx, endIndex: idx+1 } } }]
-    });
-    setSyncStatus('ok', 'Sincronizado');
-  } catch(e) { setSyncStatus('error','Error sync'); toast('Error al eliminar en Sheets: '+e.message,'error'); }
+    const ids=await api('GET',`/values/${encodeURIComponent(SHEET_NAME)}!A:A`);
+    const arr=(ids.values||[]).map(r=>r[0]);
+    const idx=arr.indexOf(id);
+    if(idx<1)return;
+    const meta=await api('GET','?fields=sheets.properties');
+    const sheet=meta.sheets.find(s=>s.properties.title===SHEET_NAME);
+    if(!sheet)return;
+    await api('POST',':batchUpdate',{requests:[{deleteDimension:{range:{sheetId:sheet.properties.sheetId,dimension:'ROWS',startIndex:idx,endIndex:idx+1}}}]});
+    setSyncStatus('ok','Sincronizado');
+  } catch(e){setSyncStatus('error','Error');toast('Error al eliminar: '+e.message,'error');}
 }
 
-// ══════ LOCAL STORAGE ══════
-function save() { try { localStorage.setItem('fc_v2', JSON.stringify(pedidos)); } catch(e) {} }
-function loadLocal() { try { const d = localStorage.getItem('fc_v2'); if(d) pedidos = JSON.parse(d); } catch(e) {} }
+// ══════ LOCAL ══════
+function save(){try{localStorage.setItem('fc_v3',JSON.stringify(pedidos));}catch(e){}}
+function loadLocal(){try{const d=localStorage.getItem('fc_v3');if(d)pedidos=JSON.parse(d);}catch(e){}}
 
 // ══════ NAV ══════
 function showPage(p) {
-  document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>{x.classList.remove('active');x.classList.remove('active-purple');});
   $('page-'+p).classList.add('active');
-  $('topbar-title').textContent = {dashboard:'Dashboard',pedidos:'Pedidos',nuevo:'Nuevo pedido'}[p]||'';
-  document.querySelectorAll('.nav-item').forEach(el => {
-    if ((el.getAttribute('onclick')||'').includes(`'${p}'`)) el.classList.add('active');
-  });
-  if (p==='dashboard') updateDashboard();
-  if (p==='pedidos') renderAll();
+  $('topbar-title').textContent={dashboard:'Dashboard',pedidos:'Pedidos',nuevo:'Nuevo pedido',produccion:'Seguimiento de producción',guia:'Guía de importación'}[p]||'';
+  const el=document.querySelector(`.nav-item[onclick*="'${p}'"]`);
+  if(el){el.classList.add(p==='produccion'||p==='guia'?'active-purple':'active');}
+  if(p==='dashboard') updateDashboard();
+  if(p==='pedidos') renderAll();
+  if(p==='produccion') renderProduccion();
 }
 
 // ══════ CRUD ══════
 async function addPedido() {
-  const cliente = $('f-cliente').value.trim();
-  const fecha   = $('f-fecha').value;
-  const monto   = parseFloat($('f-monto').value);
-  if (!cliente||!fecha||isNaN(monto)||monto<=0) { toast('Completá cliente, fecha y monto.','error'); return; }
-  const p = { id:genId(), factura:$('f-factura').value.trim(), cliente, contacto:$('f-contacto').value.trim(),
-    fecha, monto, estado:$('f-estado').value, descripcion:$('f-descripcion').value.trim() };
-  pedidos.push(p); save(); clearForm(); renderAll(); updateDashboard();
-  toast('Pedido guardado. Sincronizando con Sheets...');
+  const cliente=$('f-cliente').value.trim(), fecha=$('f-fecha').value, monto=parseFloat($('f-monto').value);
+  if(!cliente||!fecha||isNaN(monto)||monto<=0){toast('Completá cliente, fecha y monto.','error');return;}
+  const p={id:genId(),factura:$('f-factura').value.trim(),cliente,contacto:$('f-contacto').value.trim(),
+    fecha,monto,estado:$('f-estado').value,descripcion:$('f-descripcion').value.trim(),
+    p1:$('f-p1').value,p2:$('f-p2').value,p3:$('f-p3').value,p4:$('f-p4').value,pobs:$('f-pobs').value.trim()};
+  pedidos.push(p); save(); clearForm(); renderAll(); updateDashboard(); renderProduccion();
+  toast('Pedido guardado. Sincronizando...');
   await appendRow(p);
   showPage('pedidos');
 }
 
 async function deletePedido(id) {
-  if (!confirm('¿Eliminar este pedido? Esta acción no se puede deshacer.')) return;
-  pedidos = pedidos.filter(p => p.id !== id);
-  save(); renderAll(); updateDashboard();
-  toast('Pedido eliminado.');
-  await deleteRow(id);
+  if(!confirm('¿Eliminar este pedido?'))return;
+  pedidos=pedidos.filter(p=>p.id!==id);
+  save(); renderAll(); updateDashboard(); renderProduccion();
+  toast('Eliminado.'); await deleteRow(id);
 }
 
 function openEdit(id) {
-  const p = pedidos.find(x=>x.id===id); if (!p) return;
-  editId = id;
-  $('e-factura').value=p.factura||''; $('e-cliente').value=p.cliente;
-  $('e-contacto').value=p.contacto||''; $('e-fecha').value=p.fecha;
-  $('e-monto').value=p.monto; $('e-estado').value=p.estado;
+  const p=pedidos.find(x=>x.id===id); if(!p)return;
+  editId=id;
+  $('e-factura').value=p.factura||''; $('e-cliente').value=p.cliente; $('e-contacto').value=p.contacto||'';
+  $('e-fecha').value=p.fecha; $('e-monto').value=p.monto; $('e-estado').value=p.estado;
   $('e-descripcion').value=p.descripcion||'';
+  $('e-p1').value=p.p1||''; $('e-p2').value=p.p2||''; $('e-p3').value=p.p3||'';
+  $('e-p4').value=p.p4||''; $('e-pobs').value=p.pobs||'';
   $('modal-overlay').classList.add('open');
 }
-
-function closeModal() { $('modal-overlay').classList.remove('open'); editId=null; }
+function closeModal(){$('modal-overlay').classList.remove('open');editId=null;}
 
 async function saveEdit() {
-  const idx = pedidos.findIndex(x=>x.id===editId); if (idx<0) return;
-  const monto = parseFloat($('e-monto').value);
-  if (isNaN(monto)||monto<=0) { toast('Monto inválido.','error'); return; }
-  pedidos[idx] = { ...pedidos[idx], factura:$('e-factura').value.trim(), cliente:$('e-cliente').value.trim(),
-    contacto:$('e-contacto').value.trim(), fecha:$('e-fecha').value, monto,
-    estado:$('e-estado').value, descripcion:$('e-descripcion').value.trim() };
-  save(); closeModal(); renderAll(); updateDashboard();
-  toast('Pedido actualizado. Sincronizando...');
-  await updateRow(pedidos[idx]);
+  const idx=pedidos.findIndex(x=>x.id===editId); if(idx<0)return;
+  const monto=parseFloat($('e-monto').value);
+  if(isNaN(monto)||monto<=0){toast('Monto inválido.','error');return;}
+  pedidos[idx]={...pedidos[idx],factura:$('e-factura').value.trim(),cliente:$('e-cliente').value.trim(),
+    contacto:$('e-contacto').value.trim(),fecha:$('e-fecha').value,monto,
+    estado:$('e-estado').value,descripcion:$('e-descripcion').value.trim(),
+    p1:$('e-p1').value,p2:$('e-p2').value,p3:$('e-p3').value,p4:$('e-p4').value,pobs:$('e-pobs').value.trim()};
+  save(); closeModal(); renderAll(); updateDashboard(); renderProduccion();
+  toast('Actualizado. Sincronizando...'); await updateRow(pedidos[idx]);
 }
 
-$('modal-overlay').addEventListener('click', e => { if(e.target===$('modal-overlay')) closeModal(); });
+$('modal-overlay').addEventListener('click',e=>{if(e.target===$('modal-overlay'))closeModal();});
 
 function clearForm() {
-  ['f-factura','f-cliente','f-contacto','f-monto','f-descripcion'].forEach(id=>$(id).value='');
+  ['f-factura','f-cliente','f-contacto','f-monto','f-descripcion','f-p1','f-p2','f-p3','f-p4','f-pobs'].forEach(id=>$(id).value='');
   $('f-fecha').value=today(); $('f-estado').value='Pendiente';
   $('preview-ganancia').style.display='none';
 }
 
-$('f-monto').addEventListener('input', function() {
-  const v = parseFloat(this.value), pg=$('preview-ganancia');
-  if (!isNaN(v)&&v>0) { pg.style.display='flex'; $('preview-val').textContent=fmtUSD(v*0.01); }
+$('f-monto').addEventListener('input',function(){
+  const v=parseFloat(this.value),pg=$('preview-ganancia');
+  if(!isNaN(v)&&v>0){pg.style.display='flex';$('preview-val').textContent=fmtUSD(v*0.01);}
   else pg.style.display='none';
 });
 
 // ══════ FILTERS ══════
 function getFiltered() {
-  const desde=$('fil-desde').value, hasta=$('fil-hasta').value,
-        estado=$('fil-estado').value, buscar=($('fil-buscar').value||'').toLowerCase();
-  return pedidos.filter(p => {
-    if (desde&&p.fecha<desde) return false;
-    if (hasta&&p.fecha>hasta) return false;
-    if (estado&&p.estado!==estado) return false;
-    if (buscar&&!p.cliente.toLowerCase().includes(buscar)&&!(p.factura||'').toLowerCase().includes(buscar)) return false;
+  const desde=$('fil-desde').value,hasta=$('fil-hasta').value,
+        estado=$('fil-estado').value,buscar=($('fil-buscar').value||'').toLowerCase();
+  return pedidos.filter(p=>{
+    if(desde&&p.fecha<desde)return false;
+    if(hasta&&p.fecha>hasta)return false;
+    if(estado&&p.estado!==estado)return false;
+    if(buscar&&!p.cliente.toLowerCase().includes(buscar)&&!(p.factura||'').toLowerCase().includes(buscar))return false;
     return true;
   });
 }
-function clearFilters() {
-  ['fil-desde','fil-hasta','fil-buscar'].forEach(id=>$(id).value='');
-  $('fil-estado').value=''; renderAll();
+function clearFilters(){['fil-desde','fil-hasta','fil-buscar'].forEach(id=>$(id).value='');$('fil-estado').value='';renderAll();}
+
+// ══════ RENDER TABLE ══════
+function renderAll() {
+  const filtered=getFiltered().sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const tbody=$('tbody-all'),empty=$('empty-all');
+  $('pedidos-count').textContent=`${filtered.length} registro${filtered.length!==1?'s':''}`;
+  if(!filtered.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=filtered.map(p=>{
+    const stage=prodStage(p);
+    return `<tr>
+      <td class="td-mono">${p.factura||'—'}</td>
+      <td>${p.fecha}</td>
+      <td class="trunc" title="${p.cliente}">${p.cliente}</td>
+      <td class="trunc" title="${p.contacto||''}">${p.contacto||'—'}</td>
+      <td class="trunc" title="${p.descripcion||''}">${p.descripcion||'—'}</td>
+      <td style="text-align:right" class="td-mono">${fmtUSD(p.monto)}</td>
+      <td style="text-align:right" class="td-green">${fmtUSD(p.monto*0.01)}</td>
+      <td><span class="badge ${badge(p.estado)}">${p.estado}</span></td>
+      <td><span class="badge ${prodBadgeClass(stage)}">${prodLabel(stage)}</span></td>
+      <td><div style="display:flex;gap:6px;">
+        <button class="btn btn-sm" onclick="openEdit('${p.id}')">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deletePedido('${p.id}')">Eliminar</button>
+      </div></td>
+    </tr>`;
+  }).join('');
 }
 
-// ══════ RENDER ══════
-function renderAll() {
-  const filtered = getFiltered().sort((a,b)=>b.fecha.localeCompare(a.fecha));
-  const tbody=$('tbody-all'), empty=$('empty-all');
-  $('pedidos-count').textContent=`${filtered.length} registro${filtered.length!==1?'s':''}`;
-  if (!filtered.length) { tbody.innerHTML=''; empty.style.display='block'; return; }
+// ══════ PRODUCCIÓN CARDS ══════
+function renderProduccion() {
+  const filtro=$('prod-filtro')?$('prod-filtro').value:'';
+  const now=new Date();
+
+  let list=pedidos.filter(p=>p.p1||p.p2||p.p3||p.p4);
+  if(filtro==='activo') list=list.filter(p=>prodStage(p)<4);
+  if(filtro==='demorado') list=list.filter(p=>{
+    const stage=prodStage(p);
+    if(stage===4)return false;
+    const nextDate=[p.p1,p.p2,p.p3,p.p4][stage]||p.p2;
+    return nextDate && new Date(nextDate)<now;
+  });
+  if(filtro==='completo') list=list.filter(p=>prodStage(p)===4);
+
+  list=list.sort((a,b)=>(a.p1||'').localeCompare(b.p1||''));
+  const cont=$('prod-container'),empty=$('prod-empty');
+
+  if(!list.length){cont.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  tbody.innerHTML = filtered.map(p=>`<tr>
-    <td class="td-mono">${p.factura||'—'}</td>
-    <td>${p.fecha}</td>
-    <td class="trunc" title="${p.cliente}">${p.cliente}</td>
-    <td class="trunc" title="${p.contacto||''}">${p.contacto||'—'}</td>
-    <td class="trunc" title="${p.descripcion||''}">${p.descripcion||'—'}</td>
-    <td style="text-align:right" class="td-mono">${fmtUSD(p.monto)}</td>
-    <td style="text-align:right" class="td-green">${fmtUSD(p.monto*0.01)}</td>
-    <td><span class="badge ${badge(p.estado)}">${p.estado}</span></td>
-    <td><div style="display:flex;gap:6px;">
-      <button class="btn btn-sm" onclick="openEdit('${p.id}')">Editar</button>
-      <button class="btn btn-sm btn-danger" onclick="deletePedido('${p.id}')">Eliminar</button>
-    </div></td>
-  </tr>`).join('');
+
+  cont.innerHTML=list.map(p=>{
+    const stage=prodStage(p);
+    const steps=[
+      {label:'Envío a fábrica',date:p.p1,icon:'📤'},
+      {label:'Fin de producción (delivery time)',date:p.p2,icon:'🏭'},
+      {label:'Embarque desde China',date:p.p3,icon:'🚢'},
+      {label:'Llegada a Paraguay',date:p.p4,icon:'🇵🇾'},
+    ];
+
+    // progress %
+    const pct=Math.round((stage/4)*100);
+    const progColor=stage===4?'var(--accent)':stage>=2?'var(--info)':'var(--warn)';
+
+    // días totales
+    const diasTotal=diffDays(p.p1,p.p4);
+    const diasTranscurridos=p.p1?Math.max(0,diffDays(p.p1,today())):null;
+
+    // check demorado
+    const isLate=p.p2&&stage<2&&new Date(p.p2)<now;
+
+    // timeline html
+    const tlHTML=steps.map((step,i)=>{
+      const done=i<stage;
+      const active=i===stage&&i<4;
+      const late=active&&step.date&&new Date(step.date)<now;
+      let dotClass=done?'done':late?'late':active?'active':'pending';
+      const showLine=i<3;
+
+      let daysInfo='';
+      if(done&&i>0&&steps[i-1].date&&step.date){
+        const d=diffDays(steps[i-1].date,step.date);
+        daysInfo=`<div class="tl-days ok">${d} días desde etapa anterior</div>`;
+      } else if(active&&step.date){
+        const d=daysFromToday(step.date);
+        if(d<0) daysInfo=`<div class="tl-days late">Demorado ${Math.abs(d)} días</div>`;
+        else if(d===0) daysInfo=`<div class="tl-days ok">Hoy</div>`;
+        else daysInfo=`<div class="tl-days pending">En ${d} días</div>`;
+      } else if(!done&&step.date){
+        const d=daysFromToday(step.date);
+        daysInfo=`<div class="tl-days pending">${d>=0?'En '+d+' días':'Hace '+Math.abs(d)+' días'}</div>`;
+      }
+
+      return `<div class="tl-step">
+        <div class="tl-left">
+          <div class="tl-dot ${dotClass}">${done?'✓':i+1}</div>
+          ${showLine?`<div class="tl-line"></div>`:''}
+        </div>
+        <div class="tl-content">
+          <div class="tl-label">${step.icon} ${step.label}</div>
+          <div class="tl-date">${step.date?fmtDate(step.date):'Sin fecha asignada'}</div>
+          ${daysInfo}
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="prod-card">
+      <div class="prod-card-header">
+        <div class="prod-card-info">
+          <div class="prod-card-title">${p.cliente} ${p.factura?'· <span style="font-family:var(--mono);font-size:12px;color:var(--text3);">'+p.factura+'</span>':''}</div>
+          <div class="prod-card-sub">${p.descripcion||''} · ${fmtUSD(p.monto)}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+          <span class="badge ${prodBadgeClass(stage)}">${prodLabel(stage)}</span>
+          ${isLate?`<span class="badge badge-late">Demorado</span>`:''}
+          <button class="btn btn-sm btn-ghost" onclick="openEdit('${p.id}')">Editar fechas</button>
+        </div>
+      </div>
+
+      <div class="prod-progress">
+        <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${pct}%;background:${progColor};"></div></div>
+        <div class="prog-label"><span>${pct}% completado</span>${diasTotal?`<span>Total: ${diasTotal} días</span>`:'<span>Sin fecha de llegada</span>'}</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:20px;margin-bottom:16px;">
+        <div>
+          <div class="section-label" style="margin-bottom:8px;">Timeline</div>
+          <div class="timeline">${tlHTML}</div>
+        </div>
+        <div>
+          <div class="section-label" style="margin-bottom:8px;">Resumen de tiempos</div>
+          <div class="date-chips">
+            ${p.p1&&p.p2?`<div class="date-chip"><div class="date-chip-label">Producción estimada</div><div class="date-chip-val">${diffDays(p.p1,p.p2)} días</div><div class="date-chip-days" style="color:var(--text3);">${fmtDate(p.p1)} → ${fmtDate(p.p2)}</div></div>`:''}
+            ${p.p2&&p.p3?`<div class="date-chip"><div class="date-chip-label">Espera embarque</div><div class="date-chip-val">${diffDays(p.p2,p.p3)} días</div><div class="date-chip-days" style="color:var(--text3);">${fmtDate(p.p2)} → ${fmtDate(p.p3)}</div></div>`:''}
+            ${p.p3&&p.p4?`<div class="date-chip"><div class="date-chip-label">Tránsito marítimo</div><div class="date-chip-val">${diffDays(p.p3,p.p4)} días</div><div class="date-chip-days" style="color:var(--text3);">${fmtDate(p.p3)} → ${fmtDate(p.p4)}</div></div>`:''}
+            ${p.p1&&diasTranscurridos!==null?`<div class="date-chip"><div class="date-chip-label">Días transcurridos</div><div class="date-chip-val" style="color:var(--warn);">${diasTranscurridos} días</div><div class="date-chip-days" style="color:var(--text3);">desde envío a fábrica</div></div>`:''}
+            ${p.p4&&stage<4?`<div class="date-chip"><div class="date-chip-label">Días para llegada</div><div class="date-chip-val" style="color:${daysFromToday(p.p4)>=0?'var(--accent)':'var(--danger)'};">${Math.abs(daysFromToday(p.p4))} días</div><div class="date-chip-days" style="color:var(--text3);">${daysFromToday(p.p4)>=0?'restantes':'de demora'}</div></div>`:''}
+            ${stage===4&&p.p1&&p.p4?`<div class="date-chip"><div class="date-chip-label">Tiempo total real</div><div class="date-chip-val" style="color:var(--accent);">${diffDays(p.p1,p.p4)} días</div><div class="date-chip-days" style="color:var(--text3);">proceso completo</div></div>`:''}
+          </div>
+          ${p.pobs?`<div style="margin-top:12px;background:var(--bg3);border-radius:var(--radius);padding:10px 12px;font-size:12px;color:var(--text3);border-left:2px solid var(--border2);">${p.pobs}</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ══════ DASHBOARD ══════
 function updateDashboard() {
-  const monto = pedidos.reduce((s,p)=>s+p.monto,0);
+  const monto=pedidos.reduce((s,p)=>s+p.monto,0);
   $('kpi-total').textContent=pedidos.length;
   $('kpi-monto').textContent=fmtUSD(monto);
   $('kpi-ganancia').textContent=fmtUSD(monto*0.01);
-  $('kpi-pendientes').textContent=pedidos.filter(p=>p.estado==='Pendiente').length;
+  $('kpi-produccion').textContent=pedidos.filter(p=>prodStage(p)>0&&prodStage(p)<4).length;
 
   const rec=[...pedidos].sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,6);
   $('tbody-recientes').innerHTML=rec.length
-    ? rec.map(p=>`<tr>
+    ?rec.map(p=>`<tr>
         <td class="td-mono">${p.factura||'—'}</td><td>${p.fecha}</td><td>${p.cliente}</td>
         <td class="trunc">${p.contacto||'—'}</td>
         <td class="td-mono" style="text-align:right">${fmtUSD(p.monto)}</td>
         <td class="td-green" style="text-align:right">${fmtUSD(p.monto*0.01)}</td>
         <td><span class="badge ${badge(p.estado)}">${p.estado}</span></td>
+        <td><span class="badge ${prodBadgeClass(prodStage(p))}">${prodLabel(prodStage(p))}</span></td>
       </tr>`).join('')
-    : `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text3);">Sin pedidos aún</td></tr>`;
-
+    :`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3);">Sin pedidos aún</td></tr>`;
   buildCharts();
 }
 
 // ══════ CHARTS ══════
-function getMonthly() {
-  const months={}, now=new Date();
-  for (let i=5;i>=0;i--) {
-    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-    months[`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`]=0;
-  }
-  pedidos.forEach(p=>{ const k=p.fecha.slice(0,7); if(months[k]!==undefined) months[k]+=p.monto; });
+function getMonthly(){
+  const months={},now=new Date();
+  for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months[`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`]=0;}
+  pedidos.forEach(p=>{const k=p.fecha.slice(0,7);if(months[k]!==undefined)months[k]+=p.monto;});
   return months;
 }
-
-function buildCharts() {
+function buildCharts(){
   const monthly=getMonthly();
   const labels=Object.keys(monthly).map(k=>{const[y,m]=k.split('-');return new Date(y,m-1).toLocaleDateString('es-PY',{month:'short',year:'2-digit'});});
-  const montos=Object.values(monthly);
-  const ganancias=montos.map(v=>v*0.01);
-
+  const montos=Object.values(monthly),ganancias=montos.map(v=>v*0.01);
   const base={responsive:true,maintainAspectRatio:false,
     plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a1e25',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#eef0f4',bodyColor:'#8b909a',padding:10}},
-    scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555b66',font:{size:11}}},
-            y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555b66',font:{size:11},callback:v=>'$'+v.toLocaleString()}}}};
-
-  if(chartMensual) chartMensual.destroy();
+    scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555b66',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555b66',font:{size:11},callback:v=>'$'+v.toLocaleString()}}}};
+  if(chartMensual)chartMensual.destroy();
   chartMensual=new Chart($('chart-mensual'),{type:'bar',data:{labels,datasets:[{data:montos,backgroundColor:'rgba(0,200,150,0.25)',borderColor:'#00c896',borderWidth:2,borderRadius:6,hoverBackgroundColor:'rgba(0,200,150,0.4)'}]},options:{...base}});
-
   const estados=['Pendiente','Enviado','Entregado','Cancelado'];
-  if(chartEstado) chartEstado.destroy();
+  if(chartEstado)chartEstado.destroy();
   chartEstado=new Chart($('chart-estado'),{type:'doughnut',data:{labels:estados,datasets:[{data:estados.map(e=>pedidos.filter(p=>p.estado===e).length),backgroundColor:['rgba(245,166,35,0.8)','rgba(79,156,249,0.8)','rgba(0,200,150,0.8)','rgba(255,94,94,0.8)'],borderColor:'#13161b',borderWidth:3,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{color:'#8b909a',font:{size:11},boxWidth:10,padding:12}},tooltip:{backgroundColor:'#1a1e25',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#eef0f4',bodyColor:'#8b909a',padding:10}},cutout:'68%'}});
-
-  if(chartGanancia) chartGanancia.destroy();
+  if(chartGanancia)chartGanancia.destroy();
   chartGanancia=new Chart($('chart-ganancia'),{type:'line',data:{labels,datasets:[{data:ganancias,borderColor:'#00c896',backgroundColor:'rgba(0,200,150,0.08)',borderWidth:2,pointBackgroundColor:'#00c896',pointRadius:4,tension:0.4,fill:true}]},options:{...base,scales:{...base.scales,y:{...base.scales.y,ticks:{...base.scales.y.ticks,callback:v=>'$'+v.toFixed(2)}}}}});
-
   const cm={};
   pedidos.forEach(p=>{cm[p.cliente]=(cm[p.cliente]||0)+p.monto;});
   const sorted=Object.entries(cm).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  if(chartClientes) chartClientes.destroy();
-  chartClientes=new Chart($('chart-clientes'),{type:'bar',data:{labels:sorted.map(([k])=>k.length>14?k.slice(0,13)+'…':k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:['rgba(0,200,150,0.7)','rgba(79,156,249,0.7)','rgba(245,166,35,0.7)','rgba(255,94,94,0.7)','rgba(147,112,219,0.7)'],borderRadius:6,borderWidth:0}]},options:{...base,indexAxis:'y',scales:{x:{...base.scales.x,ticks:{...base.scales.x.ticks,callback:v=>'$'+v.toLocaleString()}},y:{...base.scales.y,grid:{display:false}}}}});
+  if(chartClientes)chartClientes.destroy();
+  chartClientes=new Chart($('chart-clientes'),{type:'bar',data:{labels:sorted.map(([k])=>k.length>14?k.slice(0,13)+'…':k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:['rgba(0,200,150,0.7)','rgba(79,156,249,0.7)','rgba(245,166,35,0.7)','rgba(255,94,94,0.7)','rgba(167,139,250,0.7)'],borderRadius:6,borderWidth:0}]},options:{...base,indexAxis:'y',scales:{x:{...base.scales.x,ticks:{...base.scales.x.ticks,callback:v=>'$'+v.toLocaleString()}},y:{...base.scales.y,grid:{display:false}}}}});
 }
 
 // ══════ EXPORT ══════
-function exportExcel() {
+function exportExcel(){
   if(!pedidos.length){toast('No hay datos.','error');return;}
   const monto=pedidos.reduce((s,p)=>s+p.monto,0);
   const rows=[...pedidos].sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(p=>({
-    'N° Factura':p.factura||'',Fecha:p.fecha,'Cliente / Proveedor':p.cliente,
-    'Contacto fábrica':p.contacto||'',Descripción:p.descripcion||'',
-    'Monto (USD)':p.monto,'Ganancia 1% (USD)':parseFloat((p.monto*0.01).toFixed(2)),Estado:p.estado
+    'N° Factura':p.factura||'',Fecha:p.fecha,'Cliente':p.cliente,'Contacto fábrica':p.contacto||'',
+    'Descripción':p.descripcion||'','Monto (USD)':p.monto,'Ganancia 1%':parseFloat((p.monto*0.01).toFixed(2)),Estado:p.estado,
+    'Envío fábrica':p.p1||'','Delivery time':p.p2||'','Embarque China':p.p3||'','Llegada PY':p.p4||'','Obs. Producción':p.pobs||''
   }));
   rows.push({});
-  rows.push({'N° Factura':'TOTALES',Fecha:'','Cliente / Proveedor':'','Contacto fábrica':'',Descripción:'',
-    'Monto (USD)':parseFloat(monto.toFixed(2)),'Ganancia 1% (USD)':parseFloat((monto*0.01).toFixed(2)),Estado:''});
-  const wb=XLSX.utils.book_new(), ws=XLSX.utils.json_to_sheet(rows);
-  ws['!cols']=[{wch:14},{wch:12},{wch:26},{wch:22},{wch:28},{wch:14},{wch:16},{wch:12}];
+  rows.push({'N° Factura':'TOTALES','Monto (USD)':parseFloat(monto.toFixed(2)),'Ganancia 1%':parseFloat((monto*0.01).toFixed(2))});
+  const wb=XLSX.utils.book_new(),ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:14},{wch:12},{wch:22},{wch:20},{wch:24},{wch:12},{wch:12},{wch:12},{wch:14},{wch:14},{wch:14},{wch:14},{wch:22}];
   XLSX.utils.book_append_sheet(wb,ws,'Pedidos');
   XLSX.writeFile(wb,'pedidos_fabrica.xlsx');
   toast('Excel exportado.');
@@ -728,6 +1068,7 @@ function exportExcel() {
 loadLocal();
 $('f-fecha').value=today();
 updateDashboard();
+renderProduccion();
 </script>
 </body>
 </html>
