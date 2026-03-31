@@ -223,6 +223,17 @@ select option{background:var(--bg2);}
 .page-sub{font-size:13px;color:var(--text3);margin-top:3px;}
 .page-header{margin-bottom:22px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
 
+/* COMISIÓN OCULTA */
+.hidden-val{filter:blur(6px);user-select:none;transition:filter 0.3s;}
+.hidden-val.visible{filter:none;}
+.eye-btn{background:none;border:none;cursor:pointer;color:var(--text3);padding:2px 4px;display:inline-flex;align-items:center;vertical-align:middle;margin-left:4px;}
+.eye-btn:hover{color:var(--text);}
+
+/* PROD CHARTS en dashboard */
+.charts-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;}
+@media(max-width:960px){.charts-grid3{grid-template-columns:1fr 1fr;}}
+@media(max-width:600px){.charts-grid3{grid-template-columns:1fr;}}
+
 @media(max-width:960px){
   .sidebar{width:60px;}
   .sidebar-logo .brand,.sidebar-logo .sub,.nav-item span,.nav-section,.sync-status span{display:none;}
@@ -327,7 +338,16 @@ select option{background:var(--bg2);}
     <div class="kpi-grid">
       <div class="kpi"><div class="kpi-label">Total pedidos</div><div class="kpi-value" id="kpi-total">0</div><div class="kpi-sub">registros</div></div>
       <div class="kpi"><div class="kpi-label">Monto total</div><div class="kpi-value" id="kpi-monto">$0</div><div class="kpi-sub">en dólares</div></div>
-      <div class="kpi"><div class="kpi-label">Ganancia 1%</div><div class="kpi-value green" id="kpi-ganancia">$0</div><div class="kpi-sub">comisión</div></div>
+      <div class="kpi">
+        <div class="kpi-label" style="display:flex;align-items:center;justify-content:space-between;">
+          Comisión 1%
+          <button class="eye-btn" onclick="toggleGanancia()" id="eye-btn" title="Mostrar/ocultar">
+            <svg id="eye-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
+          </button>
+        </div>
+        <div class="kpi-value green hidden-val" id="kpi-ganancia">$0</div>
+        <div class="kpi-sub">ganancia acumulada</div>
+      </div>
       <div class="kpi warn"><div class="kpi-label">En producción</div><div class="kpi-value" id="kpi-produccion">0</div><div class="kpi-sub">pedidos activos</div></div>
     </div>
     <div class="charts-grid">
@@ -350,10 +370,30 @@ select option{background:var(--bg2);}
         <div class="chart-wrap"><canvas id="chart-clientes"></canvas></div>
       </div>
     </div>
+
+    <!-- PRODUCCIÓN EN DASHBOARD -->
+    <div style="font-size:15px;font-weight:500;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="var(--purple)" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 2"/></svg>
+      Producción &amp; importación
+    </div>
+    <div class="charts-grid3">
+      <div class="chart-card">
+        <div class="chart-header"><div><div class="chart-title">Etapas de producción</div><div class="chart-sub">Pedidos por fase</div></div></div>
+        <div class="chart-wrap-sm"><canvas id="chart-prod-etapas"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div><div class="chart-title">Tiempo promedio por etapa</div><div class="chart-sub">Días entre fechas</div></div></div>
+        <div class="chart-wrap-sm"><canvas id="chart-prod-tiempos"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-header"><div><div class="chart-title">Alertas activas</div><div class="chart-sub">Estado de pedidos</div></div></div>
+        <div style="height:200px;display:flex;flex-direction:column;justify-content:center;gap:10px;" id="dash-alertas"></div>
+      </div>
+    </div>
     <div class="card">
       <div class="card-header"><span class="card-title">Últimos pedidos</span><button class="btn btn-ghost btn-sm" onclick="showPage('pedidos')">Ver todos →</button></div>
       <div class="table-wrap"><table>
-        <thead><tr><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>Contacto</th><th>Monto</th><th>Ganancia</th><th>Estado</th><th>Producción</th></tr></thead>
+        <thead><tr><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>Contacto</th><th>Monto</th><th>Comisión 1%</th><th>Estado</th><th>Producción</th></tr></thead>
         <tbody id="tbody-recientes"></tbody>
       </table></div>
     </div>
@@ -383,7 +423,7 @@ select option{background:var(--bg2);}
     </div>
     <div class="card">
       <div class="table-wrap"><table>
-        <thead><tr><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>Contacto</th><th>Descripción</th><th style="text-align:right">Monto</th><th style="text-align:right">Ganancia 1%</th><th>Estado</th><th>Producción</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>Contacto</th><th>Descripción</th><th style="text-align:right">Monto</th><th style="text-align:right">Comisión 1% <button class="eye-btn" onclick="toggleGanancia()" style="vertical-align:middle;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg></button></th><th>Estado</th><th>Producción</th><th>Acciones</th></tr></thead>
         <tbody id="tbody-all"></tbody>
       </table></div>
       <div id="empty-all" class="empty" style="display:none;"><div class="empty-icon">📦</div><p>Sin resultados.</p></div>
@@ -869,7 +909,7 @@ function renderAll() {
       <td class="trunc" title="${p.contacto||''}">${p.contacto||'—'}</td>
       <td class="trunc" title="${p.descripcion||''}">${p.descripcion||'—'}</td>
       <td style="text-align:right" class="td-mono">${fmtUSD(p.monto)}</td>
-      <td style="text-align:right" class="td-green">${fmtUSD(p.monto*0.01)}</td>
+      <td style="text-align:right" class="td-green hidden-val${gananciaVisible?' visible':''}">${fmtUSD(p.monto*0.01)}</td>
       <td><span class="badge ${badge(p.estado)}">${p.estado}</span></td>
       <td><span class="badge ${prodBadgeClass(stage)}">${prodLabel(stage)}</span></td>
       <td><div style="display:flex;gap:6px;">
@@ -1010,12 +1050,13 @@ function updateDashboard() {
         <td class="td-mono">${p.factura||'—'}</td><td>${p.fecha}</td><td>${p.cliente}</td>
         <td class="trunc">${p.contacto||'—'}</td>
         <td class="td-mono" style="text-align:right">${fmtUSD(p.monto)}</td>
-        <td class="td-green" style="text-align:right">${fmtUSD(p.monto*0.01)}</td>
+        <td class="td-green hidden-val${gananciaVisible?' visible':''}" style="text-align:right">${fmtUSD(p.monto*0.01)}</td>
         <td><span class="badge ${badge(p.estado)}">${p.estado}</span></td>
         <td><span class="badge ${prodBadgeClass(prodStage(p))}">${prodLabel(prodStage(p))}</span></td>
       </tr>`).join('')
     :`<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--text3);">Sin pedidos aún</td></tr>`;
   buildCharts();
+  buildProdCharts();
 }
 
 // ══════ CHARTS ══════
@@ -1044,6 +1085,83 @@ function buildCharts(){
   const sorted=Object.entries(cm).sort((a,b)=>b[1]-a[1]).slice(0,5);
   if(chartClientes)chartClientes.destroy();
   chartClientes=new Chart($('chart-clientes'),{type:'bar',data:{labels:sorted.map(([k])=>k.length>14?k.slice(0,13)+'…':k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:['rgba(0,200,150,0.7)','rgba(79,156,249,0.7)','rgba(245,166,35,0.7)','rgba(255,94,94,0.7)','rgba(167,139,250,0.7)'],borderRadius:6,borderWidth:0}]},options:{...base,indexAxis:'y',scales:{x:{...base.scales.x,ticks:{...base.scales.x.ticks,callback:v=>'$'+v.toLocaleString()}},y:{...base.scales.y,grid:{display:false}}}}});
+}
+
+// ══════ COMISIÓN TOGGLE ══════
+let gananciaVisible = false;
+function toggleGanancia() {
+  gananciaVisible = !gananciaVisible;
+  // kpi card
+  const kpi = $('kpi-ganancia');
+  if(gananciaVisible) kpi.classList.add('visible'); else kpi.classList.remove('visible');
+  // eye icon swap
+  $('eye-icon').innerHTML = gananciaVisible
+    ? '<path d="M2 2l12 12M6.5 6.6A3 3 0 0 0 8 11a3 3 0 0 0 2.9-2.2M1 8s2.5-5 7-5c1 0 2 .2 2.9.6M15 8s-.7 1.4-2 2.7"/>'
+    : '<path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/>';
+  // all hidden-val elements
+  document.querySelectorAll('.hidden-val').forEach(el=>{
+    if(gananciaVisible) el.classList.add('visible'); else el.classList.remove('visible');
+  });
+  // re-render tables to apply class to new rows
+  renderAll();
+  updateDashboard();
+}
+
+// ══════ PROD CHARTS (DASHBOARD) ══════
+let chartProdEtapas, chartProdTiempos;
+function buildProdCharts() {
+  const conProd = pedidos.filter(p=>p.p1||p.p2||p.p3||p.p4);
+
+  // Chart 1: pedidos por etapa
+  const etapaLabels = ['Sin inicio','En producción','En tránsito','Embarcado','Entregado'];
+  const etapaData   = [0,1,2,3,4].map(s=>pedidos.filter(p=>prodStage(p)===s).length);
+  const etapaColors = ['rgba(85,91,102,0.7)','rgba(245,166,35,0.8)','rgba(79,156,249,0.8)','rgba(167,139,250,0.8)','rgba(0,200,150,0.8)'];
+  if(chartProdEtapas) chartProdEtapas.destroy();
+  const c1 = $('chart-prod-etapas');
+  if(c1) chartProdEtapas = new Chart(c1,{type:'doughnut',data:{labels:etapaLabels,datasets:[{data:etapaData,backgroundColor:etapaColors,borderColor:'#13161b',borderWidth:3,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{color:'#8b909a',font:{size:10},boxWidth:9,padding:8}},tooltip:{backgroundColor:'#1a1e25',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#eef0f4',bodyColor:'#8b909a',padding:8}},cutout:'60%'}});
+
+  // Chart 2: tiempo promedio por etapa (días)
+  let tProd=[], tEspera=[], tTransito=[];
+  conProd.forEach(p=>{
+    if(p.p1&&p.p2){ const d=diffDays(p.p1,p.p2); if(d>0) tProd.push(d); }
+    if(p.p2&&p.p3){ const d=diffDays(p.p2,p.p3); if(d>0) tEspera.push(d); }
+    if(p.p3&&p.p4){ const d=diffDays(p.p3,p.p4); if(d>0) tTransito.push(d); }
+  });
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length) : 0;
+  const tiempoData = [avg(tProd), avg(tEspera), avg(tTransito)];
+  if(chartProdTiempos) chartProdTiempos.destroy();
+  const c2 = $('chart-prod-tiempos');
+  if(c2) chartProdTiempos = new Chart(c2,{type:'bar',data:{labels:['Producción','Espera embarque','Tránsito marítimo'],datasets:[{data:tiempoData,backgroundColor:['rgba(245,166,35,0.7)','rgba(167,139,250,0.7)','rgba(79,156,249,0.7)'],borderRadius:6,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1a1e25',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,titleColor:'#eef0f4',bodyColor:'#8b909a',padding:8,callbacks:{label:ctx=>ctx.parsed.y+' días promedio'}}},scales:{x:{grid:{display:false},ticks:{color:'#555b66',font:{size:11}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555b66',font:{size:11},callback:v=>v+' d'}}}}});
+
+  // Panel alertas
+  const now=new Date();
+  const demorados=conProd.filter(p=>{
+    const s=prodStage(p); if(s===4)return false;
+    const nextDate=[p.p1,p.p2,p.p3,p.p4][s];
+    return nextDate&&new Date(nextDate)<now;
+  });
+  const proximos=conProd.filter(p=>{
+    const s=prodStage(p); if(s===4)return false;
+    const nextDate=[p.p1,p.p2,p.p3,p.p4][s];
+    if(!nextDate)return false;
+    const d=Math.round((new Date(nextDate)-now)/(1000*60*60*24));
+    return d>=0&&d<=7;
+  });
+  const completados=conProd.filter(p=>prodStage(p)===4);
+  const alertEl=$('dash-alertas');
+  if(alertEl) alertEl.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--danger-dim);border-radius:var(--radius);border-left:3px solid var(--danger);">
+      <span style="font-size:13px;color:var(--danger);">Demorados</span>
+      <span style="font-size:22px;font-weight:600;color:var(--danger);font-family:var(--mono);">${demorados.length}</span>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--warn-dim);border-radius:var(--radius);border-left:3px solid var(--warn);">
+      <span style="font-size:13px;color:var(--warn);">Vencen en 7 días</span>
+      <span style="font-size:22px;font-weight:600;color:var(--warn);font-family:var(--mono);">${proximos.length}</span>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--accent-dim);border-radius:var(--radius);border-left:3px solid var(--accent);">
+      <span style="font-size:13px;color:var(--accent);">Completados</span>
+      <span style="font-size:22px;font-weight:600;color:var(--accent);font-family:var(--mono);">${completados.length}</span>
+    </div>`;
 }
 
 // ══════ EXPORT ══════
