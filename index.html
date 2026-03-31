@@ -340,7 +340,7 @@ select option{background:var(--bg2);}
       <div class="kpi"><div class="kpi-label">Monto total</div><div class="kpi-value" id="kpi-monto">$0</div><div class="kpi-sub">en dólares</div></div>
       <div class="kpi">
         <div class="kpi-label" style="display:flex;align-items:center;justify-content:space-between;">
-          Comisión 1%
+          <span class="hidden-val" id="kpi-label-ganancia">Comisión 1%</span>
           <button class="eye-btn" onclick="toggleGanancia()" id="eye-btn" title="Mostrar/ocultar">
             <svg id="eye-icon" width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg>
           </button>
@@ -393,7 +393,7 @@ select option{background:var(--bg2);}
     <div class="card">
       <div class="card-header"><span class="card-title">Últimos pedidos</span><button class="btn btn-ghost btn-sm" onclick="showPage('pedidos')">Ver todos →</button></div>
       <div class="table-wrap"><table>
-        <thead><tr><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>Contacto</th><th>Monto</th><th>Comisión 1%</th><th>Estado</th><th>Producción</th></tr></thead>
+        <thead><tr><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>Contacto</th><th>Monto</th><th><span class="hidden-val">Comisión 1%</span></th><th>Estado</th><th>Producción</th></tr></thead>
         <tbody id="tbody-recientes"></tbody>
       </table></div>
     </div>
@@ -423,7 +423,7 @@ select option{background:var(--bg2);}
     </div>
     <div class="card">
       <div class="table-wrap"><table>
-        <thead><tr><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>Contacto</th><th>Descripción</th><th style="text-align:right">Monto</th><th style="text-align:right">Comisión 1% <button class="eye-btn" onclick="toggleGanancia()" style="vertical-align:middle;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg></button></th><th>Estado</th><th>Producción</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>Contacto</th><th>Descripción</th><th style="text-align:right">Monto</th><th style="text-align:right"><span class="hidden-val">Comisión 1%</span> <button class="eye-btn" onclick="toggleGanancia()" style="vertical-align:middle;"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/></svg></button></th><th>Estado</th><th>Producción</th><th>Acciones</th></tr></thead>
         <tbody id="tbody-all"></tbody>
       </table></div>
       <div id="empty-all" class="empty" style="display:none;"><div class="empty-icon">📦</div><p>Sin resultados.</p></div>
@@ -1091,18 +1091,15 @@ function buildCharts(){
 let gananciaVisible = false;
 function toggleGanancia() {
   gananciaVisible = !gananciaVisible;
-  // kpi card
-  const kpi = $('kpi-ganancia');
-  if(gananciaVisible) kpi.classList.add('visible'); else kpi.classList.remove('visible');
+  // toggle all hidden-val elements (values + labels)
+  document.querySelectorAll('.hidden-val').forEach(el=>{
+    if(gananciaVisible) el.classList.add('visible'); else el.classList.remove('visible');
+  });
   // eye icon swap
   $('eye-icon').innerHTML = gananciaVisible
     ? '<path d="M2 2l12 12M6.5 6.6A3 3 0 0 0 8 11a3 3 0 0 0 2.9-2.2M1 8s2.5-5 7-5c1 0 2 .2 2.9.6M15 8s-.7 1.4-2 2.7"/>'
     : '<path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2"/>';
-  // all hidden-val elements
-  document.querySelectorAll('.hidden-val').forEach(el=>{
-    if(gananciaVisible) el.classList.add('visible'); else el.classList.remove('visible');
-  });
-  // re-render tables to apply class to new rows
+  // re-render tables so new rows get the right class
   renderAll();
   updateDashboard();
 }
