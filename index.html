@@ -232,7 +232,23 @@ select option{background:var(--bg2);}
 /* PROD CHARTS en dashboard */
 .charts-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px;}
 @media(max-width:960px){.charts-grid3{grid-template-columns:1fr 1fr;}}
-@media(max-width:600px){.charts-grid3{grid-template-columns:1fr;}}
+@media(max-width:600px){.charts-grid3{grid-column:1fr;}}
+
+/* COUNTDOWN */
+.countdown-box{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-lg);padding:16px 20px;margin-bottom:16px;}
+.countdown-title{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.countdown-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;}
+.cd-block{background:var(--bg2);border-radius:var(--radius);padding:10px 12px;text-align:center;border:1px solid var(--border);}
+.cd-num{font-size:28px;font-weight:600;font-family:var(--mono);letter-spacing:-1px;line-height:1;}
+.cd-label{font-size:10px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em;}
+.cd-bar-wrap{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;border:1px solid var(--border);}
+.cd-bar-fill{height:100%;border-radius:3px;transition:width 0.4s ease;}
+.cd-phases{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.cd-phase{padding:8px 12px;border-radius:var(--radius);font-size:12px;display:flex;justify-content:space-between;align-items:center;}
+.cd-phase-label{color:var(--text2);}
+.cd-phase-val{font-family:var(--mono);font-size:12px;font-weight:500;}
+.cd-status{font-size:12px;font-weight:500;text-align:center;padding:6px 0;}
+.cd-promised{font-size:11px;color:var(--text3);text-align:center;margin-top:6px;}
 
 @media(max-width:960px){
   .sidebar{width:60px;}
@@ -457,10 +473,25 @@ select option{background:var(--bg2);}
       <div class="form-section">
         <div class="form-section-title purple-title"><span style="background:var(--purple-dim);color:var(--purple);">2</span>Informe de producción</div>
         <div class="form-grid">
-          <div class="form-group"><label>Envío a fábrica</label><input type="date" id="f-p1" title="Fecha en que se envió el pedido a la fábrica"/></div>
+          <div class="form-group"><label>Envío a fábrica</label><input type="date" id="f-p1" title="Fecha en que se envió el pedido a la fábrica" oninput="previewCountdown()"/></div>
           <div class="form-group"><label>Delivery time (fin producción)</label><input type="date" id="f-p2" title="Fecha estimada de finalización de producción"/></div>
           <div class="form-group"><label>Embarque desde China</label><input type="date" id="f-p3" title="Fecha de embarque del barco/avión desde China"/></div>
           <div class="form-group"><label>Llegada a Paraguay</label><input type="date" id="f-p4" title="Fecha estimada o real de llegada a Paraguay"/></div>
+        </div>
+        <!-- FECHA PROMETIDA AL CLIENTE -->
+        <div style="background:var(--purple-dim);border:1px solid rgba(167,139,250,0.25);border-radius:var(--radius);padding:14px 16px;margin-top:14px;">
+          <div style="font-size:11px;font-weight:500;color:var(--purple);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">🗓 Fecha prometida al cliente (6 meses)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Fabricación (3 meses)</div>
+              <div style="font-size:13px;font-family:var(--mono);color:var(--text);" id="pv-fab">—</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Entrega total (6 meses)</div>
+              <div style="font-size:13px;font-family:var(--mono);color:var(--purple);font-weight:500;" id="pv-total">—</div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px;">Calculado automáticamente desde la fecha de envío a fábrica.</div>
         </div>
         <div class="form-group" style="margin-top:12px;"><label>Observaciones de producción</label><textarea id="f-pobs" placeholder="Notas sobre el proceso productivo, demoras, cambios..."></textarea></div>
       </div>
@@ -630,10 +661,24 @@ select option{background:var(--bg2);}
     <div class="form-section" style="border-bottom:none;margin-bottom:0;padding-bottom:0;">
       <div class="form-section-title purple-title"><span style="background:var(--purple-dim);color:var(--purple);">2</span>Informe de producción</div>
       <div class="form-grid">
-        <div class="form-group"><label>Envío a fábrica</label><input type="date" id="e-p1"/></div>
+        <div class="form-group"><label>Envío a fábrica</label><input type="date" id="e-p1" oninput="previewEditCountdown()"/></div>
         <div class="form-group"><label>Delivery time (fin producción)</label><input type="date" id="e-p2"/></div>
         <div class="form-group"><label>Embarque desde China</label><input type="date" id="e-p3"/></div>
         <div class="form-group"><label>Llegada a Paraguay</label><input type="date" id="e-p4"/></div>
+      </div>
+      <!-- FECHA PROMETIDA AL CLIENTE -->
+      <div style="background:var(--purple-dim);border:1px solid rgba(167,139,250,0.25);border-radius:var(--radius);padding:14px 16px;margin-top:14px;">
+        <div style="font-size:11px;font-weight:500;color:var(--purple);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;">🗓 Fecha prometida al cliente (6 meses)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Fabricación (3 meses)</div>
+            <div style="font-size:13px;font-family:var(--mono);color:var(--text);" id="epv-fab">—</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Entrega total (6 meses)</div>
+            <div style="font-size:13px;font-family:var(--mono);color:var(--purple);font-weight:500;" id="epv-total">—</div>
+          </div>
+        </div>
       </div>
       <div class="form-group" style="margin-top:12px;"><label>Observaciones de producción</label><textarea id="e-pobs"></textarea></div>
     </div>
@@ -850,6 +895,7 @@ function openEdit(id) {
   $('e-p1').value=p.p1||''; $('e-p2').value=p.p2||''; $('e-p3').value=p.p3||'';
   $('e-p4').value=p.p4||''; $('e-pobs').value=p.pobs||'';
   $('modal-overlay').classList.add('open');
+  previewEditCountdown();
 }
 function closeModal(){$('modal-overlay').classList.remove('open');editId=null;}
 
@@ -871,6 +917,7 @@ function clearForm() {
   ['f-factura','f-cliente','f-contacto','f-monto','f-descripcion','f-p1','f-p2','f-p3','f-p4','f-pobs'].forEach(id=>$(id).value='');
   $('f-fecha').value=today(); $('f-estado').value='Pendiente';
   $('preview-ganancia').style.display='none';
+  $('pv-fab').textContent='—'; $('pv-total').textContent='—';
 }
 
 $('f-monto').addEventListener('input',function(){
@@ -918,6 +965,80 @@ function renderAll() {
       </div></td>
     </tr>`;
   }).join('');
+}
+
+// ══════ COUNTDOWN HELPERS ══════
+function addMonths(dateStr, months) {
+  const d = new Date(dateStr);
+  d.setMonth(d.getMonth() + months);
+  return d.toISOString().split('T')[0];
+}
+
+function buildCountdownHTML(p) {
+  const start    = p.p1;
+  const fabEnd   = addMonths(start, 3);
+  const totalEnd = addMonths(start, 6);
+  const now       = new Date();
+  const startD    = new Date(start);
+  const totalEndD = new Date(totalEnd);
+  const fabEndD   = new Date(fabEnd);
+  const totalDias   = diffDays(start, totalEnd);
+  const elapsed     = Math.max(0, Math.round((now - startD)/(1000*60*60*24)));
+  const remaining   = Math.max(0, Math.round((totalEndD - now)/(1000*60*60*24)));
+  const pct         = Math.min(100, Math.round((elapsed / totalDias) * 100));
+  const isOverdue   = now > totalEndD;
+  const inFab       = now <= fabEndD;
+  const fabRemaining   = Math.max(0, Math.round((fabEndD - now)/(1000*60*60*24)));
+  const fleteRemaining = Math.max(0, Math.round((totalEndD - now)/(1000*60*60*24)));
+  const barColor    = isOverdue ? 'var(--danger)' : pct > 80 ? 'var(--warn)' : 'var(--purple)';
+  const remainColor = isOverdue ? 'var(--danger)' : pct > 80 ? 'var(--warn)' : 'var(--accent)';
+  const remMeses    = Math.floor(remaining / 30);
+  const remDias     = remaining % 30;
+  const statusText  = isOverdue
+    ? `⚠ Vencido hace ${elapsed - totalDias} días`
+    : inFab ? `🏭 En fabricación — quedan ${fabRemaining} días para fin de producción`
+    : `🚢 En flete marítimo — quedan ${fleteRemaining} días para llegada`;
+  const statusColor = isOverdue ? 'var(--danger)' : pct > 80 ? 'var(--warn)' : 'var(--accent)';
+
+  return `<div class="countdown-box">
+    <div class="countdown-title">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="var(--purple)" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 2"/></svg>
+      Contador prometido al cliente · inicio ${fmtDate(start)}
+    </div>
+    <div class="countdown-row">
+      <div class="cd-block"><div class="cd-num" style="color:${remainColor};">${remMeses}</div><div class="cd-label">meses rest.</div></div>
+      <div class="cd-block"><div class="cd-num" style="color:${remainColor};">${remDias}</div><div class="cd-label">días rest.</div></div>
+      <div class="cd-block"><div class="cd-num" style="color:var(--text3);">${elapsed}</div><div class="cd-label">días transcurr.</div></div>
+    </div>
+    <div class="cd-bar-wrap"><div class="cd-bar-fill" style="width:${pct}%;background:${barColor};"></div></div>
+    <div class="prog-label" style="margin-top:5px;"><span style="color:var(--text3);">${pct}% del tiempo utilizado</span><span style="color:var(--text3);">Entrega prometida: ${fmtDate(totalEnd)}</span></div>
+    <div class="cd-phases">
+      <div class="cd-phase" style="background:${inFab?'var(--warn-dim)':'var(--accent-dim)'};border:1px solid ${inFab?'rgba(245,166,35,0.2)':'rgba(0,200,150,0.2)'};">
+        <span class="cd-phase-label">🏭 Fabricación (3 meses)</span>
+        <span class="cd-phase-val" style="color:${inFab?'var(--warn)':'var(--accent)'};">${inFab ? fabRemaining+' días rest.' : 'Completado ✓'}</span>
+      </div>
+      <div class="cd-phase" style="background:${!inFab&&!isOverdue?'var(--info-dim)':'var(--bg3)'};border:1px solid ${!inFab&&!isOverdue?'rgba(79,156,249,0.2)':'var(--border)'};">
+        <span class="cd-phase-label">🚢 Flete marítimo (3 meses)</span>
+        <span class="cd-phase-val" style="color:${!inFab&&!isOverdue?'var(--info)':'var(--text3)'};">${!inFab&&!isOverdue ? fleteRemaining+' días rest.' : inFab ? 'Pendiente' : isOverdue ? 'Vencido' : '—'}</span>
+      </div>
+    </div>
+    <div class="cd-status" style="color:${statusColor};margin-top:10px;">${statusText}</div>
+    <div class="cd-promised">Fin fabricación: <strong style="color:var(--warn);">${fmtDate(fabEnd)}</strong> &nbsp;·&nbsp; Entrega total al cliente: <strong style="color:var(--purple);">${fmtDate(totalEnd)}</strong></div>
+  </div>`;
+}
+
+function previewCountdown() {
+  const d = $('f-p1').value;
+  if(!d){ $('pv-fab').textContent='—'; $('pv-total').textContent='—'; return; }
+  $('pv-fab').textContent   = fmtDate(addMonths(d, 3));
+  $('pv-total').textContent = fmtDate(addMonths(d, 6));
+}
+
+function previewEditCountdown() {
+  const d = $('e-p1').value;
+  if(!d){ $('epv-fab').textContent='—'; $('epv-total').textContent='—'; return; }
+  $('epv-fab').textContent   = fmtDate(addMonths(d, 3));
+  $('epv-total').textContent = fmtDate(addMonths(d, 6));
 }
 
 // ══════ PRODUCCIÓN CARDS ══════
@@ -1008,6 +1129,8 @@ function renderProduccion() {
           <button class="btn btn-sm btn-ghost" onclick="openEdit('${p.id}')">Editar fechas</button>
         </div>
       </div>
+
+      ${p.p1 ? buildCountdownHTML(p) : ''}
 
       <div class="prod-progress">
         <div class="prog-bar-bg"><div class="prog-bar-fill" style="width:${pct}%;background:${progColor};"></div></div>
